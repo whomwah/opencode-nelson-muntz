@@ -1,0 +1,55 @@
+{
+  "name": "opencode-ralph-wiggum",
+  "version": "1.0.0",
+  "description": "Ralph Wiggum iterative development loop plugin for OpenCode",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build:types": "tsc --emitDeclarationOnly",
+    "prepublishOnly": "bun run build && bun run build:types",
+    "dev": "bun run build --watch",
+    "typecheck": "tsc --noEmit",
+    "link:local": "mkdir -p ~/.config/opencode/plugin && ln -sf $(pwd)/src/index.ts ~/.config/opencode/plugin/ralph-wiggum.ts",
+    "link:project": "mkdir -p .opencode/plugin && ln -sf $(pwd)/src/index.ts .opencode/plugin/ralph-wiggum.ts",
+    "unlink:local": "rm -f ~/.config/opencode/plugin/ralph-wiggum.ts",
+    "unlink:project": "rm -f .opencode/plugin/ralph-wiggum.ts"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "ralph-wiggum",
+    "ai",
+    "iterative-development",
+    "autonomous-coding"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/whomwah/ralph-wiggum-opencode"
+  },
+  "bugs": {
+    "url": "https://github.com/whomwah/ralph-wiggum-opencode/issues"
+  },
+  "homepage": "https://github.com/whomwah/ralph-wiggum-opencode#readme",
+  "devDependencies": {
+    "@opencode-ai/plugin": "latest",
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=0.1.0"
+  }
+}
