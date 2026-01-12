@@ -304,27 +304,39 @@ You: "Use ralph-tasks"
 # Execute task #2
 You: "Use ralph-task 2"
 
-# Mark it complete when done
-You: "Use ralph-complete 2"
+# Task is automatically marked complete when finished
 ```
 
 This is useful when you want to:
 
 - Review work between tasks
-- Make manual adjustments
+- Make manual adjustments before committing
 - Skip certain tasks
 - Debug a specific task
+
+**Key difference from loop mode**: Single task execution does NOT create git commits automatically. You review the changes and commit manually when satisfied.
+
+### Loop vs Single Task Mode
+
+| Behavior               | `ralph-start` (loop)            | `ralph-task` (single)  |
+| ---------------------- | ------------------------------- | ---------------------- |
+| Auto-complete task     | Yes                             | Yes                    |
+| Git commit per task    | Yes                             | No                     |
+| Continues to next task | Yes                             | No                     |
+| Use case               | Walk away, review commits later | Step through carefully |
+
+When using `ralph-start`, each completed task gets its own git commit (e.g., `feat(ralph): complete task 2 - Core Parser`). This lets you review each task's changes separately in git history.
 
 ### Available Tools
 
 | Tool                     | Description                                            |
 | ------------------------ | ------------------------------------------------------ |
-| `ralph-start`            | Start loop from PLAN.md (simplest way to start)        |
+| `ralph-start`            | Start loop from PLAN.md (auto-commits per task)        |
 | `ralph-plan`             | Create or view a PLAN.md file                          |
 | `ralph-tasks`            | List all tasks from the plan                           |
-| `ralph-task`             | Execute a single task (no loop)                        |
-| `ralph-complete`         | Mark a task as complete in the plan                    |
-| `ralph-loop`             | Start loop with direct prompt (advanced)               |
+| `ralph-task`             | Execute a single task (auto-completes, no commit)      |
+| `ralph-complete`         | Manually mark a task complete (rarely needed now)      |
+| `ralph-loop`             | Start loop with direct prompt (advanced, no plan file) |
 | `cancel-ralph`           | Cancel the active Ralph loop                           |
 | `ralph-status`           | Check the status of the current loop                   |
 | `ralph-check-completion` | Manually check if text contains the completion promise |
@@ -333,10 +345,10 @@ This is useful when you want to:
 
 #### ralph-start
 
-| Parameter       | Type   | Required | Description                               |
-| --------------- | ------ | -------- | ----------------------------------------- |
-| `file`          | string | No       | Plan file path (default: PLAN.md)         |
-| `maxIterations` | number | No       | Max iterations (default: 50, 0=unlimited) |
+| Parameter       | Type   | Required | Description                             |
+| --------------- | ------ | -------- | --------------------------------------- |
+| `file`          | string | No       | Plan file path (default: PLAN.md)       |
+| `maxIterations` | number | No       | Max iterations (default: 0 = unlimited) |
 
 #### ralph-plan
 

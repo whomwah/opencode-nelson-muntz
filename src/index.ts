@@ -15,6 +15,8 @@ interface RalphState {
   startedAt: string
   planFile?: string | null
   currentTaskId?: string | null
+  mode?: "loop" | "single-task"
+  currentTaskNum?: number | null
 }
 
 interface PlanTask {
@@ -91,6 +93,90 @@ async function readPlanFile(directory: string, planFile: string): Promise<string
 async function writePlanFile(directory: string, planFile: string, content: string): Promise<void> {
   const planPath = path.isAbsolute(planFile) ? planFile : path.join(directory, planFile)
   await Bun.write(planPath, content)
+}
+
+async function createGitCommit(
+  directory: string,
+  taskTitle: string,
+  taskNum: number,
+): Promise<{ success: boolean; message: string }> {
+  const { spawn } = await import("node:child_process")
+
+  // Helper to run a command and get output
+  const runCommand = (
+    cmd: string,
+    args: string[],
+  ): Promise<{ code: number; stdout: string; stderr: string }> => {
+    return new Promise((resolve) => {
+      const proc = spawn(cmd, args, { cwd: directory })
+      let stdout = ""
+      let stderr = ""
+      proc.stdout?.on("data", (data) => (stdout += data.toString()))
+      proc.stderr?.on("data", (data) => (stderr += data.toString()))
+      proc.on("close", (code) => resolve({ code: code ?? 1, stdout, stderr }))
+      proc.on("error", () => resolve({ code: 1, stdout, stderr: "Command failed to spawn" }))
+    })
+  }
+
+  // Check if we're in a git repo
+  const gitCheck = await runCommand("git", ["rev-parse", "--git-dir"])
+  if (gitCheck.code !== 0) {
+    return { success: false, message: "Not a git repository" }
+  }
+
+  // Check if there are any changes to commit
+  const statusCheck = await runCommand("git", ["status", "--porcelain"])
+  if (statusCheck.stdout.trim() === "") {
+    return { success: false, message: "No changes to commit" }
+  }
+
+  // Stage all changes
+  const addResult = await runCommand("git", ["add", "-A"])
+  if (addResult.code !== 0) {
+    return { success: false, message: `Failed to stage changes: ${addResult.stderr}` }
+  }
+
+  // Create commit with task info
+  const commitMessage = `feat(ralph): complete task ${taskNum} - ${taskTitle}`
+  const commitResult = await runCommand("git", ["commit", "-m", commitMessage])
+  if (commitResult.code !== 0) {
+    return { success: false, message: `Failed to commit: ${commitResult.stderr}` }
+  }
+
+  return { success: true, message: `Created commit: ${commitMessage}` }
+}
+
+async function markTaskCompleteAndCommit(
+  directory: string,
+  planFile: string,
+  taskNum: number,
+  shouldCommit: boolean,
+): Promise<{ taskTitle: string; commitResult?: { success: boolean; message: string } }> {
+  const content = await readPlanFile(directory, planFile)
+  if (!content) {
+    throw new Error(`Plan file not found: ${planFile}`)
+  }
+
+  const plan = parsePlanFile(content)
+  if (taskNum < 1 || taskNum > plan.tasks.length) {
+    throw new Error(`Invalid task number: ${taskNum}`)
+  }
+
+  const task = plan.tasks[taskNum - 1]
+  if (task.status === "completed") {
+    return { taskTitle: task.title }
+  }
+
+  // Update the plan file
+  const updatedContent = updateTaskStatus(content, task.id, plan.tasks, "completed")
+  await writePlanFile(directory, planFile, updatedContent)
+
+  let commitResult: { success: boolean; message: string } | undefined
+  if (shouldCommit) {
+    commitResult = await createGitCommit(directory, task.title, taskNum)
+  }
+
+  return { taskTitle: task.title, commitResult }
 }
 
 function parsePlanFile(content: string): ParsedPlan {
@@ -226,6 +312,61 @@ This ensures progress is tracked accurately and the plan file stays in sync with
   return prompt
 }
 
+function generateSingleTaskPrompt(
+  plan: ParsedPlan,
+  task: PlanTask,
+  taskNum: number,
+  isLoopMode: boolean,
+): string {
+  let prompt = `# ${plan.title || "Project Plan"}\n\n`
+
+  if (plan.overview) {
+    prompt += `## Project Context\n${plan.overview}\n\n`
+  }
+
+  // Show progress overview
+  const completedCount = plan.tasks.filter((t) => t.status === "completed").length
+  prompt += `## Progress: ${completedCount}/${plan.tasks.length} tasks complete\n\n`
+
+  // List all tasks with current one highlighted
+  prompt += `### All Tasks\n`
+  for (let i = 0; i < plan.tasks.length; i++) {
+    const t = plan.tasks[i]
+    const checkbox = t.status === "completed" ? "[x]" : "[ ]"
+    const current = i === taskNum - 1 ? " ← CURRENT" : ""
+    prompt += `${i + 1}. ${checkbox} ${t.title}${current}\n`
+  }
+
+  prompt += `\n## Current Task: #${taskNum}\n\n`
+  prompt += `**${task.title}**\n\n`
+  prompt += task.description || "No additional description provided."
+  prompt += `\n\n`
+
+  // Different instructions based on mode
+  if (isLoopMode) {
+    prompt += `## Instructions
+
+Complete this task thoroughly. When you finish:
+1. Verify your work is correct
+2. The task will be automatically marked complete
+3. A git commit will be created for this task
+4. The loop will continue to the next task
+
+Focus ONLY on this task - do not work ahead.
+`
+  } else {
+    prompt += `## Instructions
+
+Complete this task thoroughly. When you finish:
+1. Verify your work is correct
+2. The task will be automatically marked complete
+3. Review your changes and commit manually when ready
+`
+  }
+
+  return prompt
+}
+
 function updateTaskStatus(
   content: string,
   taskId: string,
@@ -348,6 +489,201 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
         await writeState(directory, state)
       }
 
+      // Handle single-task mode: just mark complete and exit
+      if (state.mode === "single-task") {
+        if (state.planFile && state.currentTaskNum) {
+          try {
+            const result = await markTaskCompleteAndCommit(
+              directory,
+              state.planFile,
+              state.currentTaskNum,
+              false, // No commit in single-task mode
+            )
+            await client.app.log({
+              body: {
+                service: "ralph-wiggum",
+                level: "info",
+                message: `✓ Task completed: ${result.taskTitle}`,
+              },
+            })
+            await client.tui.showToast({
+              body: {
+                message: `✓ Task completed: ${result.taskTitle}`,
+                variant: "success",
+              },
+            })
+          } catch (err) {
+            await client.app.log({
+              body: {
+                service: "ralph-wiggum",
+                level: "error",
+                message: `Failed to mark task complete: ${err}`,
+              },
+            })
+          }
+        }
+        await removeState(directory)
+        return
+      }
+
+      // Handle loop mode: complete current task, commit, then continue to next
+      if (state.mode === "loop" && state.planFile) {
+        // Mark current task complete and create commit
+        if (state.currentTaskNum) {
+          try {
+            const result = await markTaskCompleteAndCommit(
+              directory,
+              state.planFile,
+              state.currentTaskNum,
+              true, // Create commit in loop mode
+            )
+            let logMsg = `✓ Task ${state.currentTaskNum} completed: ${result.taskTitle}`
+            if (result.commitResult?.success) {
+              logMsg += ` | ${result.commitResult.message}`
+            } else if (result.commitResult) {
+              logMsg += ` | Commit skipped: ${result.commitResult.message}`
+            }
+            await client.app.log({
+              body: {
+                service: "ralph-wiggum",
+                level: "info",
+                message: logMsg,
+              },
+            })
+          } catch (err) {
+            await client.app.log({
+              body: {
+                service: "ralph-wiggum",
+                level: "error",
+                message: `Failed to complete task ${state.currentTaskNum}: ${err}`,
+              },
+            })
+          }
+        }
+
+        // Re-read the plan to find next pending task
+        const content = await readPlanFile(directory, state.planFile)
+        if (!content) {
+          await client.app.log({
+            body: {
+              service: "ralph-wiggum",
+              level: "error",
+              message: `Plan file not found: ${state.planFile}`,
+            },
+          })
+          await removeState(directory)
+          return
+        }
+
+        const plan = parsePlanFile(content)
+        const nextPendingIdx = plan.tasks.findIndex((t) => t.status !== "completed")
+
+        // Check if all tasks are complete
+        if (nextPendingIdx === -1) {
+          await client.app.log({
+            body: {
+              service: "ralph-wiggum",
+              level: "info",
+              message: `🎉 All ${plan.tasks.length} tasks complete!`,
+            },
+          })
+          await client.tui.showToast({
+            body: {
+              message: `🎉 Ralph loop: All ${plan.tasks.length} tasks complete!`,
+              variant: "success",
+            },
+          })
+          await removeState(directory)
+          return
+        }
+
+        // Check if completion promise was detected
+        if (state.completionPromise) {
+          const completed = await checkCompletionInSession(sessionId, state.completionPromise)
+          if (completed) {
+            await client.app.log({
+              body: {
+                service: "ralph-wiggum",
+                level: "info",
+                message: `Ralph loop: Detected <promise>${state.completionPromise}</promise> - loop complete!`,
+              },
+            })
+            await client.tui.showToast({
+              body: {
+                message: `Ralph loop completed after ${state.iteration} iterations!`,
+                variant: "success",
+              },
+            })
+            await removeState(directory)
+            return
+          }
+        }
+
+        // Check max iterations
+        if (state.maxIterations > 0 && state.iteration >= state.maxIterations) {
+          await client.app.log({
+            body: {
+              service: "ralph-wiggum",
+              level: "info",
+              message: `Ralph loop: Max iterations (${state.maxIterations}) reached.`,
+            },
+          })
+          await client.tui.showToast({
+            body: {
+              message: `Ralph loop: Max iterations (${state.maxIterations}) reached.`,
+              variant: "warning",
+            },
+          })
+          await removeState(directory)
+          return
+        }
+
+        // Continue to next task
+        const nextTask = plan.tasks[nextPendingIdx]
+        const nextTaskNum = nextPendingIdx + 1
+        state.iteration++
+        state.currentTaskId = nextTask.id
+        state.currentTaskNum = nextTaskNum
+        await writeState(directory, state)
+
+        const taskPrompt = generateSingleTaskPrompt(plan, nextTask, nextTaskNum, true)
+        const completedCount = plan.tasks.filter((t) => t.status === "completed").length
+
+        const systemMsg = `🔄 Ralph iteration ${state.iteration} | Task ${nextTaskNum}/${plan.tasks.length} (${completedCount} complete)`
+
+        await client.app.log({
+          body: {
+            service: "ralph-wiggum",
+            level: "info",
+            message: systemMsg,
+          },
+        })
+
+        try {
+          await client.session.prompt({
+            path: { id: sessionId },
+            body: {
+              parts: [
+                {
+                  type: "text",
+                  text: `${systemMsg}\n\n---\n\n${taskPrompt}`,
+                },
+              ],
+            },
+          })
+        } catch (error) {
+          await client.app.log({
+            body: {
+              service: "ralph-wiggum",
+              level: "error",
+              message: `Ralph loop: Failed to send prompt - ${error}`,
+            },
+          })
+        }
+        return
+      }
+
+      // Legacy mode (for ralph-loop tool without plan file)
       // Check if completion promise was detected in the last message
       if (state.completionPromise) {
         const completed = await checkCompletionInSession(sessionId, state.completionPromise)
@@ -757,7 +1093,10 @@ with ralph-task to execute a specific task.`,
         description: `Execute a single task from the PLAN.md file (one iteration only).
 
 Specify task by number (1, 2, 3...) or by name/keyword.
-This runs the task ONCE without looping - useful for manual step-by-step execution.`,
+This runs the task ONCE without looping - useful for manual step-by-step execution.
+
+When the task completes, it will automatically be marked as done in the PLAN.md file.
+No git commit is created - you can review the changes and commit manually.`,
         args: {
           task: tool.schema.string().describe("Task number (1, 2, 3...) or task name/keyword"),
           file: tool.schema
@@ -765,7 +1104,7 @@ This runs the task ONCE without looping - useful for manual step-by-step executi
             .optional()
             .describe(`Plan file path (default: ${DEFAULT_PLAN_FILE})`),
         },
-        async execute(args) {
+        async execute(args, toolCtx) {
           const planFile = args.file || DEFAULT_PLAN_FILE
           const content = await readPlanFile(directory, planFile)
 
@@ -782,21 +1121,52 @@ This runs the task ONCE without looping - useful for manual step-by-step executi
           // Find the task
           const taskNum = parseInt(args.task, 10)
           let task: PlanTask | undefined
+          let resolvedTaskNum: number
 
           if (!isNaN(taskNum) && taskNum >= 1 && taskNum <= plan.tasks.length) {
             task = plan.tasks[taskNum - 1]
+            resolvedTaskNum = taskNum
           } else {
             // Search by name
-            task = plan.tasks.find((t) => t.title.toLowerCase().includes(args.task.toLowerCase()))
-          }
-
-          if (!task) {
-            return `Task "${args.task}" not found. Use ralph-tasks to see available tasks.`
+            const idx = plan.tasks.findIndex((t) =>
+              t.title.toLowerCase().includes(args.task.toLowerCase()),
+            )
+            if (idx !== -1) {
+              task = plan.tasks[idx]
+              resolvedTaskNum = idx + 1
+            } else {
+              return `Task "${args.task}" not found. Use ralph-tasks to see available tasks.`
+            }
           }
 
           if (task.status === "completed") {
             return `Task "${task.title}" is already marked as complete. To re-run it, uncheck it in ${planFile} first.`
           }
+
+          // Check for existing loop
+          const existingState = await readState(directory)
+          if (existingState?.active) {
+            return `A Ralph loop is already active (iteration ${existingState.iteration}). Use cancel-ralph to stop it first.`
+          }
+
+          // Get session ID from tool context
+          const sessionId = (toolCtx as { sessionId?: string })?.sessionId || null
+
+          // Create state for single-task mode
+          const state: RalphState = {
+            active: true,
+            iteration: 1,
+            maxIterations: 1, // Single iteration only
+            completionPromise: null,
+            prompt: "", // Not used in single-task mode
+            sessionId,
+            startedAt: new Date().toISOString(),
+            planFile,
+            currentTaskId: task.id,
+            mode: "single-task",
+            currentTaskNum: resolvedTaskNum,
+          }
+          await writeState(directory, state)
 
           // Generate a focused prompt for this single task
           const taskPrompt = `# Single Task Execution
@@ -813,7 +1183,7 @@ ${task.description || "No additional description provided."}
 
 1. Complete the task described above
 2. When done, verify the work is correct
-3. Do NOT mark the task as complete in the plan file - that will be done separately
+3. The task will be automatically marked complete when you finish
 
 ${plan.overview ? `\n## Project Context\n\n${plan.overview}` : ""}`
 
@@ -825,9 +1195,9 @@ ${taskPrompt}
 
 ---
 
-Note: This is a ONE-TIME execution (no loop). When finished, use:
-- ralph-tasks: To see updated task list
-- ralph-complete ${plan.tasks.indexOf(task) + 1}: To mark this task complete`
+Note: This is a ONE-TIME execution (no loop). The task will be automatically
+marked complete when finished. No git commit will be created - review and
+commit your changes manually when ready.`
         },
       }),
 
@@ -893,8 +1263,11 @@ It reads your PLAN.md, builds a prompt from all pending tasks, and starts iterat
 
 The loop will:
 1. Read the plan file and extract all pending tasks
-2. Create a prompt with the full task list
-3. Iterate until all tasks are complete (if completion_promise is set)`,
+2. Work through each task one at a time
+3. After each task: mark it complete AND create a git commit
+4. Continue until all tasks are complete (if completion_promise is set)
+
+Each task gets its own git commit, so you can review them separately later.`,
         args: {
           file: tool.schema
             .string()
@@ -903,11 +1276,11 @@ The loop will:
           maxIterations: tool.schema
             .number()
             .optional()
-            .describe("Maximum iterations (default: 2, 0 = unlimited)"),
+            .describe("Maximum iterations (default: 0 = unlimited)"),
         },
         async execute(args, toolCtx) {
           const planFile = args.file || DEFAULT_PLAN_FILE
-          const maxIterations = args.maxIterations ?? 2
+          const maxIterations = args.maxIterations ?? 0
           const content = await readPlanFile(directory, planFile)
 
           if (!content) {
@@ -936,22 +1309,29 @@ To get started:
             return `A Ralph loop is already active (iteration ${existingState.iteration}). Use cancel-ralph to stop it first.`
           }
 
-          // Build the prompt from the plan
-          const prompt = generatePlanPrompt(plan)
+          // Find the first pending task
+          const firstPendingIdx = plan.tasks.findIndex((t) => t.status !== "completed")
+          const firstTask = plan.tasks[firstPendingIdx]
+          const firstTaskNum = firstPendingIdx + 1
+
+          // Build a prompt focused on the current task
+          const taskPrompt = generateSingleTaskPrompt(plan, firstTask, firstTaskNum, true)
           const completionPromise = plan.completionPromise || null
           const sessionId = (toolCtx as { sessionId?: string })?.sessionId || null
 
-          // Create state
+          // Create state with loop mode
           const state: RalphState = {
             active: true,
             iteration: 1,
             maxIterations,
             completionPromise,
-            prompt,
+            prompt: "", // Will be regenerated each iteration
             sessionId,
             startedAt: new Date().toISOString(),
             planFile,
-            currentTaskId: null,
+            currentTaskId: firstTask.id,
+            mode: "loop",
+            currentTaskNum: firstTaskNum,
           }
           await writeState(directory, state)
 
@@ -960,11 +1340,13 @@ To get started:
 Plan: ${plan.title || "Untitled"}
 Tasks: ${pendingTasks.length} pending, ${plan.tasks.length - pendingTasks.length} complete
 Max iterations: ${maxIterations > 0 ? maxIterations : "unlimited"}
-Completion promise: ${completionPromise || "none (will run until max iterations)"}
+Mode: Loop with auto-commit per task
+
+Starting with task ${firstTaskNum}: ${firstTask.title}
 
 ---
 
-${prompt}`
+${taskPrompt}`
 
           if (completionPromise) {
             output += `
