@@ -13,8 +13,8 @@ The technique is named after Ralph Wiggum from The Simpsons, embodying the philo
 This plugin implements Ralph using OpenCode's `session.idle` event that detects when the AI finishes:
 
 ```
-# You invoke the ralph-loop tool:
-ralph-loop("Your task description", completionPromise: "DONE", maxIterations: 50)
+# You invoke the rw-loop tool:
+rw-loop("Your task description", completionPromise: "DONE", maxIterations: 50)
 
 # Then OpenCode automatically:
 # 1. Works on the task
@@ -207,7 +207,7 @@ AI: [Creates PLAN.md with structured tasks]
 
 # Step 2: Start the loop
 You: "Start ralph loop"
-AI: [Uses ralph-start, begins iterating through tasks]
+AI: [Uses rw-start, begins iterating through tasks]
 
 # Step 3: Walk away
 Ralph iterates until all tasks are complete
@@ -226,10 +226,10 @@ You: "Create a PLAN.md with these tasks"
 AI: [Creates structured plan file]
 ```
 
-Or use the `ralph-plan` tool:
+Or use the `rw-plan` tool:
 
 ```
-You: "Use ralph-plan to create a plan for building a REST API"
+You: "Use rw-plan to create a plan for building a REST API"
 ```
 
 ### Example PLAN.md
@@ -282,7 +282,7 @@ When ALL tasks are complete, output: <promise>ALL_TASKS_COMPLETE</promise>
 ```
 You: "Start ralph loop"
 # or
-You: "Use ralph-start"
+You: "Use rw-start"
 ```
 
 Ralph reads PLAN.md, builds a prompt from your tasks, and iterates until done.
@@ -290,7 +290,7 @@ Ralph reads PLAN.md, builds a prompt from your tasks, and iterates until done.
 **Direct prompt (for simple tasks):**
 
 ```
-You: "Use ralph-loop with prompt 'Build a REST API for todos' and completionPromise 'DONE'"
+You: "Use rw-loop with prompt 'Build a REST API for todos' and completionPromise 'DONE'"
 ```
 
 ### Single Task Execution
@@ -299,10 +299,10 @@ For more control, execute tasks one at a time:
 
 ```
 # List available tasks
-You: "Use ralph-tasks"
+You: "Use rw-tasks"
 
 # Execute task #2
-You: "Use ralph-task 2"
+You: "Use rw-task 2"
 
 # Task is automatically marked complete when finished
 ```
@@ -318,39 +318,39 @@ This is useful when you want to:
 
 ### Loop vs Single Task Mode
 
-| Behavior               | `ralph-start` (loop)            | `ralph-task` (single)  |
+| Behavior               | `rw-start` (loop)               | `rw-task` (single)     |
 | ---------------------- | ------------------------------- | ---------------------- |
 | Auto-complete task     | Yes                             | Yes                    |
 | Git commit per task    | Yes                             | No                     |
 | Continues to next task | Yes                             | No                     |
 | Use case               | Walk away, review commits later | Step through carefully |
 
-When using `ralph-start`, each completed task gets its own git commit (e.g., `feat(ralph): complete task 2 - Core Parser`). This lets you review each task's changes separately in git history.
+When using `rw-start`, each completed task gets its own git commit (e.g., `feat(ralph): complete task 2 - Core Parser`). This lets you review each task's changes separately in git history.
 
 ### Available Tools
 
-| Tool                     | Description                                            |
-| ------------------------ | ------------------------------------------------------ |
-| `ralph-start`            | Start loop from PLAN.md (auto-commits per task)        |
-| `ralph-plan`             | Create or view a PLAN.md file                          |
-| `ralph-tasks`            | List all tasks from the plan                           |
-| `ralph-task`             | Execute a single task (auto-completes, no commit)      |
-| `ralph-complete`         | Manually mark a task complete (rarely needed now)      |
-| `ralph-loop`             | Start loop with direct prompt (advanced, no plan file) |
-| `cancel-ralph`           | Cancel the active Ralph loop                           |
-| `ralph-status`           | Check the status of the current loop                   |
-| `ralph-check-completion` | Manually check if text contains the completion promise |
+| Tool                  | Description                                            |
+| --------------------- | ------------------------------------------------------ |
+| `rw-start`            | Start loop from PLAN.md (auto-commits per task)        |
+| `rw-plan`             | Create or view a PLAN.md file                          |
+| `rw-tasks`            | List all tasks from the plan                           |
+| `rw-task`             | Execute a single task (auto-completes, no commit)      |
+| `rw-complete`         | Manually mark a task complete (rarely needed now)      |
+| `rw-loop`             | Start loop with direct prompt (advanced, no plan file) |
+| `rw-cancel`           | Cancel the active Ralph loop                           |
+| `rw-status`           | Check the status of the current loop                   |
+| `rw-check-completion` | Manually check if text contains the completion promise |
 
 ### Tool Parameters
 
-#### ralph-start
+#### rw-start
 
 | Parameter       | Type   | Required | Description                             |
 | --------------- | ------ | -------- | --------------------------------------- |
 | `file`          | string | No       | Plan file path (default: PLAN.md)       |
 | `maxIterations` | number | No       | Max iterations (default: 0 = unlimited) |
 
-#### ralph-plan
+#### rw-plan
 
 | Parameter     | Type   | Required | Description                               |
 | ------------- | ------ | -------- | ----------------------------------------- |
@@ -358,14 +358,14 @@ When using `ralph-start`, each completed task gets its own git commit (e.g., `fe
 | `description` | string | No       | Project description to customize template |
 | `file`        | string | No       | Plan file path (default: PLAN.md)         |
 
-#### ralph-task
+#### rw-task
 
 | Parameter | Type   | Required | Description                       |
 | --------- | ------ | -------- | --------------------------------- |
 | `task`    | string | Yes      | Task number (1, 2, 3...) or name  |
 | `file`    | string | No       | Plan file path (default: PLAN.md) |
 
-#### ralph-loop
+#### rw-loop
 
 | Parameter           | Type   | Required | Description                                                     |
 | ------------------- | ------ | -------- | --------------------------------------------------------------- |
@@ -486,7 +486,7 @@ In your prompt, include what to do if stuck:
 
 ## How It Works
 
-1. **Loop Activation**: When you call `ralph-loop`, the plugin creates a state file at `.opencode/ralph-loop.local.json`
+1. **Loop Activation**: When you call `rw-loop`, the plugin creates a state file at `.opencode/ralph-loop.local.json`
 
 2. **Session Monitoring**: The plugin listens for the `session.idle` event which fires when the AI finishes its response
 
@@ -536,12 +536,12 @@ Keep trying until success. The loop handles retry logic automatically.
 
 This OpenCode port has some differences from the original Claude Code plugin:
 
-| Feature           | Claude Code                    | OpenCode                 |
-| ----------------- | ------------------------------ | ------------------------ |
-| Loop mechanism    | Stop hook (shell script)       | `session.idle` event     |
-| Commands          | Slash commands (`/ralph-loop`) | Custom tools             |
-| State storage     | Markdown frontmatter           | JSON file                |
-| Loop continuation | Blocks exit + feeds prompt     | Sends new prompt via SDK |
+| Feature           | Claude Code                 | OpenCode                 |
+| ----------------- | --------------------------- | ------------------------ |
+| Loop mechanism    | Stop hook (shell script)    | `session.idle` event     |
+| Commands          | Slash commands (`/rw-loop`) | Custom tools             |
+| State storage     | Markdown frontmatter        | JSON file                |
+| Loop continuation | Blocks exit + feeds prompt  | Sends new prompt via SDK |
 
 ## Learn More
 

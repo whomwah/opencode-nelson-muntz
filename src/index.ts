@@ -298,9 +298,9 @@ function generatePlanPrompt(plan: ParsedPlan, taskFilter?: string): string {
   prompt += `
 ## Instructions
 
-**IMPORTANT**: After completing each task, immediately use the \`ralph-complete\` tool to mark it done in the PLAN.md file. Do NOT batch completions - mark each task complete right after finishing it.
+**IMPORTANT**: After completing each task, immediately use the \`rw-complete\` tool to mark it done in the PLAN.md file. Do NOT batch completions - mark each task complete right after finishing it.
 
-Example: After finishing task 1, run: \`ralph-complete 1\`
+Example: After finishing task 1, run: \`rw-complete 1\`
 
 This ensures progress is tracked accurately and the plan file stays in sync with actual work done.
 `
@@ -775,7 +775,7 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
 
     // Custom tools for Ralph loop management
     tool: {
-      "ralph-loop": tool({
+      "rw-loop": tool({
         description: `Start a Ralph Wiggum loop - an iterative development loop that continues until completion.
 
 Usage: Call this tool with your task prompt and optional configuration.
@@ -811,7 +811,7 @@ Example: Start a loop to build a REST API that runs until "DONE" is output.`,
           // Check if there's already an active loop
           const existingState = await readState(directory)
           if (existingState?.active) {
-            return `Error: A Ralph loop is already active (iteration ${existingState.iteration}). Use the cancel-ralph tool to cancel it first.`
+            return `Error: A Ralph loop is already active (iteration ${existingState.iteration}). Use the rw-cancel tool to cancel it first.`
           }
 
           // Get session ID from tool context if available
@@ -878,7 +878,7 @@ IMPORTANT - Do not circumvent the loop:
         },
       }),
 
-      "cancel-ralph": tool({
+      "rw-cancel": tool({
         description: "Cancel an active Ralph Wiggum loop",
         args: {},
         async execute() {
@@ -895,7 +895,7 @@ IMPORTANT - Do not circumvent the loop:
         },
       }),
 
-      "ralph-status": tool({
+      "rw-status": tool({
         description: "Check the status of the current Ralph Wiggum loop",
         args: {},
         async execute() {
@@ -918,7 +918,7 @@ ${state.prompt}`
         },
       }),
 
-      "ralph-check-completion": tool({
+      "rw-check-completion": tool({
         description: "Check if the completion promise has been fulfilled in the given text",
         args: {
           text: tool.schema.string().describe("The text to check for completion promise"),
@@ -954,7 +954,7 @@ Loop continues at iteration ${state.iteration}.`
       // Plan-based tools
       // ═══════════════════════════════════════════════════════════
 
-      "ralph-plan": tool({
+      "rw-plan": tool({
         description: `Create or view a PLAN.md file for structured task management.
 
 Usage:
@@ -965,7 +965,7 @@ Usage:
 The plan file uses a simple markdown format with checkboxes for tasks.
 You can set a completion_promise in the file that Ralph will use.
 
-Example: ralph-plan with description "Build a REST API with auth and tests"`,
+Example: rw-plan with description "Build a REST API with auth and tests"`,
         args: {
           action: tool.schema
             .string()
@@ -987,7 +987,7 @@ Example: ralph-plan with description "Build a REST API with auth and tests"`,
           if (action === "view") {
             const content = await readPlanFile(directory, planFile)
             if (!content) {
-              return `No plan file found at ${planFile}. Use ralph-plan to create one.`
+              return `No plan file found at ${planFile}. Use rw-plan to create one.`
             }
 
             const plan = parsePlanFile(content)
@@ -1014,7 +1014,7 @@ Example: ralph-plan with description "Build a REST API with auth and tests"`,
           // Create action
           const existingContent = await readPlanFile(directory, planFile)
           if (existingContent) {
-            return `Plan file already exists at ${planFile}. Use ralph-plan with action='view' to see it, or delete it first to create a new one.`
+            return `Plan file already exists at ${planFile}. Use rw-plan with action='view' to see it, or delete it first to create a new one.`
           }
 
           let template = PLAN_TEMPLATE
@@ -1036,17 +1036,17 @@ The plan file has been created with a template. Edit it to:
 3. Optionally set a completion_promise
 
 Then use:
-- ralph-tasks: List all tasks
-- ralph-start: Start the Ralph loop with this plan
-- ralph-task <id>: Execute a single task`
+- rw-tasks: List all tasks
+- rw-start: Start the Ralph loop with this plan
+- rw-task <id>: Execute a single task`
         },
       }),
 
-      "ralph-tasks": tool({
+      "rw-tasks": tool({
         description: `List all tasks from a PLAN.md file.
 
 Shows task IDs, titles, and completion status. Use the task ID or number
-with ralph-task to execute a specific task.`,
+with rw-task to execute a specific task.`,
         args: {
           file: tool.schema
             .string()
@@ -1058,7 +1058,7 @@ with ralph-task to execute a specific task.`,
           const content = await readPlanFile(directory, planFile)
 
           if (!content) {
-            return `No plan file found at ${planFile}. Use ralph-plan to create one.`
+            return `No plan file found at ${planFile}. Use rw-plan to create one.`
           }
 
           const plan = parsePlanFile(content)
@@ -1081,15 +1081,15 @@ with ralph-task to execute a specific task.`,
           }
 
           output += `\nCommands:\n`
-          output += `- ralph-task 1      Execute task #1\n`
-          output += `- ralph-task "name" Execute task by name\n`
-          output += `- ralph-start       Start loop for all tasks`
+          output += `- rw-task 1      Execute task #1\n`
+          output += `- rw-task "name" Execute task by name\n`
+          output += `- rw-start       Start loop for all tasks`
 
           return output
         },
       }),
 
-      "ralph-task": tool({
+      "rw-task": tool({
         description: `Execute a single task from the PLAN.md file (one iteration only).
 
 Specify task by number (1, 2, 3...) or by name/keyword.
@@ -1109,7 +1109,7 @@ No git commit is created - you can review the changes and commit manually.`,
           const content = await readPlanFile(directory, planFile)
 
           if (!content) {
-            return `No plan file found at ${planFile}. Use ralph-plan to create one.`
+            return `No plan file found at ${planFile}. Use rw-plan to create one.`
           }
 
           const plan = parsePlanFile(content)
@@ -1135,7 +1135,7 @@ No git commit is created - you can review the changes and commit manually.`,
               task = plan.tasks[idx]
               resolvedTaskNum = idx + 1
             } else {
-              return `Task "${args.task}" not found. Use ralph-tasks to see available tasks.`
+              return `Task "${args.task}" not found. Use rw-tasks to see available tasks.`
             }
           }
 
@@ -1146,7 +1146,7 @@ No git commit is created - you can review the changes and commit manually.`,
           // Check for existing loop
           const existingState = await readState(directory)
           if (existingState?.active) {
-            return `A Ralph loop is already active (iteration ${existingState.iteration}). Use cancel-ralph to stop it first.`
+            return `A Ralph loop is already active (iteration ${existingState.iteration}). Use rw-cancel to stop it first.`
           }
 
           // Get session ID from tool context
@@ -1201,10 +1201,10 @@ commit your changes manually when ready.`
         },
       }),
 
-      "ralph-complete": tool({
+      "rw-complete": tool({
         description: `Mark a task as complete in the PLAN.md file.
 
-Use after successfully completing a task with ralph-task.`,
+Use after successfully completing a task with rw-task.`,
         args: {
           task: tool.schema.string().describe("Task number (1, 2, 3...) or task name"),
           file: tool.schema
@@ -1255,7 +1255,7 @@ Use after successfully completing a task with ralph-task.`,
         },
       }),
 
-      "ralph-start": tool({
+      "rw-start": tool({
         description: `Start a Ralph loop using tasks from a PLAN.md file.
 
 This is the simplest way to start Ralph - just say "start ralph loop" or use this tool.
@@ -1287,9 +1287,9 @@ Each task gets its own git commit, so you can review them separately later.`,
             return `No plan file found at ${planFile}.
 
 To get started:
-1. Use ralph-plan to create a plan file
+1. Use rw-plan to create a plan file
 2. Edit the plan with your tasks
-3. Run ralph-start again`
+3. Run rw-start again`
           }
 
           const plan = parsePlanFile(content)
@@ -1306,7 +1306,7 @@ To get started:
           // Check for existing loop
           const existingState = await readState(directory)
           if (existingState?.active) {
-            return `A Ralph loop is already active (iteration ${existingState.iteration}). Use cancel-ralph to stop it first.`
+            return `A Ralph loop is already active (iteration ${existingState.iteration}). Use rw-cancel to stop it first.`
           }
 
           // Find the first pending task

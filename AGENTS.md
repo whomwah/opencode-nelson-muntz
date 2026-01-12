@@ -13,12 +13,15 @@ TypeScript plugin for OpenCode implementing the Ralph Wiggum iterative developme
 
 ## Build/Lint/Test Commands
 
+**IMPORTANT**: Always use `just` commands instead of `bun run` directly. This ensures you run the exact same commands as the maintainer.
+
 ```bash
-bun run build           # Build plugin to dist/
-bun run build:types     # Generate TypeScript declarations
-bun run typecheck       # Run TypeScript type checking (tsc --noEmit)
-bun run dev             # Watch mode - rebuilds on changes
-bun run link:local      # Symlink to ~/.config/opencode/plugin/
+just build              # Build plugin to dist/
+just build-types        # Generate TypeScript declarations
+just typecheck          # Run TypeScript type checking (tsc --noEmit)
+just dev                # Watch mode - rebuilds on changes
+just link-local         # Symlink to ~/.config/opencode/plugin/
+just link-project       # Symlink to .opencode/plugin/
 ```
 
 ### Testing
@@ -32,21 +35,44 @@ No test suite exists. When adding tests:
 ### Formatting
 
 ```bash
-bun run format          # Format all files with Prettier
-bun run format:check    # Check formatting without modifying
+just format             # Format all files with Prettier
+just format-check       # Check formatting without modifying
 ```
 
 ### Linting
 
 No linter configured. If adding one, prefer Biome or ESLint.
 
+### All Available Tasks
+
+Run `just` with no arguments to see all available tasks:
+
+| Task                  | Description                            |
+| --------------------- | -------------------------------------- |
+| `just install`        | Install dependencies                   |
+| `just build`          | Build the plugin for distribution      |
+| `just build-types`    | Generate TypeScript declarations       |
+| `just build-all`      | Build everything (code + types)        |
+| `just dev`            | Watch mode for development             |
+| `just typecheck`      | Run TypeScript type checking           |
+| `just format`         | Format code with Prettier              |
+| `just format-check`   | Check formatting without modifying     |
+| `just link-local`     | Symlink to global OpenCode plugins     |
+| `just link-project`   | Symlink to current project's plugins   |
+| `just unlink-local`   | Remove global plugin symlink           |
+| `just unlink-project` | Remove project plugin symlink          |
+| `just clean`          | Clean build artifacts                  |
+| `just rebuild`        | Full rebuild from clean state          |
+| `just prepublish`     | Prepare for publishing (build + types) |
+
 ## Project Structure
 
 ```
-src/index.ts          # All plugin logic (~400 lines, single file)
+src/index.ts          # All plugin logic (single file)
 dist/                 # Built output (gitignored)
 package.json          # Scripts and dependencies
 tsconfig.json         # TypeScript config (ESNext, strict, bundler resolution)
+justfile              # Task runner commands (use these!)
 ```
 
 ## Code Style Guidelines
@@ -65,13 +91,13 @@ import * as path from "path"
 
 ### Naming Conventions
 
-| Type          | Convention           | Example                      |
-| ------------- | -------------------- | ---------------------------- |
-| Constants     | SCREAMING_SNAKE_CASE | `RALPH_STATE_FILE`           |
-| Interfaces    | PascalCase           | `RalphState`                 |
-| Functions     | camelCase            | `readState`, `writeState`    |
-| Plugin export | PascalCase           | `RalphWiggumPlugin`          |
-| Tool names    | kebab-case           | `ralph-loop`, `cancel-ralph` |
+| Type          | Convention           | Example                   |
+| ------------- | -------------------- | ------------------------- |
+| Constants     | SCREAMING_SNAKE_CASE | `RALPH_STATE_FILE`        |
+| Interfaces    | PascalCase           | `RalphState`              |
+| Functions     | camelCase            | `readState`, `writeState` |
+| Plugin export | PascalCase           | `RalphWiggumPlugin`       |
+| Tool names    | kebab-case           | `rw-loop`, `rw-cancel`    |
 
 ### Formatting
 
@@ -93,9 +119,9 @@ OpenCode loads plugins from two locations at startup:
 | Global   | All projects   | `~/.config/opencode/plugin/` |
 | Project  | Single project | `.opencode/plugin/`          |
 
-The `link:local` script symlinks `dist/index.js` to the global plugin directory. We link to `dist/` (not `src/`) because the build bundles all dependencies.
+The `just link-local` task symlinks `dist/index.js` to the global plugin directory. We link to `dist/` (not `src/`) because the build bundles all dependencies.
 
-**After making changes**: Run `bun run build`, then restart OpenCode.
+**After making changes**: Run `just build`, then restart OpenCode.
 
 ## Commit Messages
 
