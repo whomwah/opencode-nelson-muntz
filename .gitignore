@@ -4,8 +4,8 @@ node_modules/
 # Build output
 dist/
 
-# OpenCode state files (created at runtime)
-.opencode/ralph-loop.local.json
+# OpenCode local files (state, plans, etc.)
+.opencode/
 
 # Bun
 bun.lockb
