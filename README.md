@@ -1,33 +1,28 @@
-# Ralph Wiggum Plugin for OpenCode (⚠️ work in progress, use at your own risk ⚠️)
+# Nelson Muntz Plugin for OpenCode (⚠️ work in progress, use at your own risk ⚠️)
 
-Implementation of the Ralph Wiggum technique for iterative, self-referential AI development loops in OpenCode.
+Plan-based iterative development loops for OpenCode. Create structured plans, execute tasks automatically, and commit progress as you go.
 
-## What is Ralph?
+> **Why "Nelson Muntz"?** This plugin is loosely based on the [Ralph Wiggum](https://ghuntley.com/ralph/) technique - a simple bash loop that repeatedly feeds an AI agent a prompt until completion. Nelson takes that core idea but adds structured planning, task tracking, and git integration. Since it's evolved beyond the original concept, it got its own Simpsons character. Ha-ha!
 
-Ralph is a development methodology based on continuous AI agent loops. As Geoffrey Huntley describes it: **"Ralph is a Bash loop"** - a simple `while true` that repeatedly feeds an AI agent a prompt file, allowing it to iteratively improve its work until completion.
+## What is Nelson?
 
-The technique is named after Ralph Wiggum from The Simpsons, embodying the philosophy of persistent iteration despite setbacks.
+Nelson is a development plugin that combines structured planning with automated execution. It works in two modes:
 
-### Core Concept
+1. **Plan-based mode** (primary): Create a plan with tasks, then let Nelson work through them one by one, committing progress after each task
+2. **Direct loop mode** (secondary): Hammer at a single goal until a completion condition is met
 
-This plugin implements Ralph using OpenCode's `session.idle` event. When the AI finishes, the plugin checks progress and either continues or stops.
+The plugin listens for OpenCode's `session.idle` event to continue work automatically, creating a self-referential feedback loop where the AI iteratively builds on its own work.
 
-**Two modes of operation:**
-
-1. **Plan-based** (`rw-start`): Work through a list of tasks, marking each complete
-2. **Direct loop** (`rw-loop`): Hammer at one goal until it succeeds
-
-Both create a **self-referential feedback loop** where:
-
-- The AI's previous work persists in files
-- Each iteration sees modified files and output from earlier attempts
-- The AI iteratively improves by building on its own work
+### Core Workflow
 
 **Plan-based mode** - for structured projects:
 
 ```
-# Create PLAN.md with tasks, then:
-rw-start
+# Create a plan through conversation:
+nm-plan name="my-api"
+
+# Work through tasks automatically:
+nm-start
 
 # Loop works through tasks one by one
 # Stops when: all tasks marked [x] OR maxIterations reached
@@ -37,13 +32,11 @@ rw-start
 
 ```
 # Start a loop that keeps trying until success:
-rw-loop("Make all tests pass", completionPromise: "ALL_TESTS_PASSING", maxIterations: 20)
+nm-loop("Make all tests pass", completionPromise: "ALL_TESTS_PASSING", maxIterations: 20)
 
 # Same prompt fed back each iteration
 # Stops when: <promise>ALL_TESTS_PASSING</promise> output OR maxIterations reached
 ```
-
-The direct loop is ideal for tasks like "fix the build", "make tests pass", or "get this working" where you want the AI to keep iterating on the same problem until solved.
 
 ## Installation
 
@@ -54,7 +47,7 @@ Add the plugin to your `opencode.json`:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-ralph-wiggum"]
+  "plugin": ["opencode-nelson-muntz"]
 }
 ```
 
@@ -64,8 +57,8 @@ OpenCode will automatically install it on startup.
 
 ```bash
 # Clone the repository
-git clone https://github.com/whomwah/opencode-ralph-wiggum.git
-cd opencode-ralph-wiggum
+git clone https://github.com/whomwah/opencode-nelson-muntz.git
+cd opencode-nelson-muntz
 
 # Install dependencies
 just install
@@ -77,21 +70,21 @@ just link-project  # Project: .opencode/plugin/
 
 ## Usage
 
-Ralph's tools are designed to complement OpenCode's built-in Plan and Code modes:
+Nelson's tools are designed to complement OpenCode's built-in Plan and Code modes:
 
 - **OpenCode Plan mode** - For thinking, designing, and conversation without making changes
 - **OpenCode Build mode** - For executing tasks and writing code
 
-Ralph's `rw-plan` and `rw-start` tools align with this workflow:
+Nelson's `nm-plan` and `nm-start` tools align with this workflow:
 
-| OpenCode Mode | Ralph Tool | What Happens                                |
-| ------------- | ---------- | ------------------------------------------- |
-| Plan mode     | `rw-plan`  | Design and refine your plan in conversation |
-| Build mode    | `rw-start` | Execute tasks, write code, commit changes   |
+| OpenCode Mode | Nelson Tool | What Happens                                |
+| ------------- | ----------- | ------------------------------------------- |
+| Plan mode     | `nm-plan`   | Design and refine your plan in conversation |
+| Build mode    | `nm-start`  | Execute tasks, write code, commit changes   |
 
 ### Plan Mode
 
-Use OpenCode's Plan mode (Ctrl+K) with `rw-plan` to create and refine your plan _before_ any code is written. This is an iterative conversation where you shape the plan until you're happy with it.
+Use OpenCode's Plan mode (Ctrl+K) with `nm-plan` to create and refine your plan _before_ any code is written. This is an iterative conversation where you shape the plan until you're happy with it.
 
 1. **Start planning** - Ask the AI to create a plan:
 
@@ -99,7 +92,7 @@ Use OpenCode's Plan mode (Ctrl+K) with `rw-plan` to create and refine your plan 
    You: "Create a plan for building a REST API for todos"
    ```
 
-   The AI calls `rw-plan` and generates a draft plan, showing it to you in the conversation. **No file is written yet.**
+   The AI calls `nm-plan` and generates a draft plan, showing it to you in the conversation. **No file is written yet.**
 
 2. **Iterate on the plan** - Refine it through conversation:
 
@@ -117,53 +110,60 @@ Use OpenCode's Plan mode (Ctrl+K) with `rw-plan` to create and refine your plan 
    You: "Looks good, save it"
    ```
 
-   The AI calls `rw-plan` with `action='save'` to write the plan file to `.opencode/plans/rest-api.md`.
+   The AI calls `nm-plan` with `action='save'` to write the plan file to `.opencode/plans/rest-api.md`.
 
 ### Build Mode
 
-Once your plan is saved, switch to OpenCode's Build mode and use `rw-start` to execute tasks. The AI reads the plan file and works through each task.
+Once your plan is saved, switch to OpenCode's Build mode and use `nm-start` to execute tasks. The AI reads the plan file and works through each task.
 
 1. **Start the loop** - Execute all pending tasks automatically:
 
    ```
-   You: "Use rw-start rest-api"
+   You: "Use nm-start rest-api"
    ```
 
-   Ralph works through each task, marking them complete and creating git commits.
+   Nelson works through each task, marking them complete and creating git commits.
 
 2. **Or run tasks one at a time** - For more control:
 
    ```
-   You: "Use rw-tasks"          # List tasks and their status
-   You: "Use rw-task 2"         # Execute task #2 only
+   You: "Use nm-tasks"          # List tasks and their status
+   You: "Use nm-task 2"         # Execute task #2 only
    ```
 
 ### Available Tools
 
-When the plugin is installed you can ask opencode for all "rw-* tasks" and it will list them.
+When the plugin is installed you can ask opencode for all "nm-* tasks" and it will list them.
+
+**Primary tools (plan-based workflow):**
+
+| Tool          | Description                                            |
+| ------------- | ------------------------------------------------------ |
+| `nm-plan`     | Create or view a PLAN.md file                          |
+| `nm-start`    | Start loop from PLAN.md (auto-commits per task)        |
+| `nm-tasks`    | List all tasks from the plan                           |
+| `nm-task`     | Execute a single task (auto-completes, no commit)      |
+| `nm-complete` | Manually mark a task complete (rarely needed now)      |
+
+**Secondary tools (direct loop mode):**
 
 | Tool                  | Description                                            |
 | --------------------- | ------------------------------------------------------ |
-| `rw-start`            | Start loop from PLAN.md (auto-commits per task)        |
-| `rw-plan`             | Create or view a PLAN.md file                          |
-| `rw-tasks`            | List all tasks from the plan                           |
-| `rw-task`             | Execute a single task (auto-completes, no commit)      |
-| `rw-complete`         | Manually mark a task complete (rarely needed now)      |
-| `rw-loop`             | Start loop with direct prompt (advanced, no plan file) |
-| `rw-cancel`           | Cancel the active Ralph loop                           |
-| `rw-status`           | Check the status of the current loop                   |
-| `rw-check-completion` | Manually check if text contains the completion promise |
+| `nm-loop`             | Start loop with direct prompt (advanced, no plan file) |
+| `nm-cancel`           | Cancel the active Nelson loop                          |
+| `nm-status`           | Check the status of the current loop                   |
+| `nm-check-completion` | Manually check if text contains the completion promise |
 
 ### Tool Parameters
 
-#### rw-start
+#### nm-start
 
 | Parameter       | Type   | Required | Description                                       |
 | --------------- | ------ | -------- | ------------------------------------------------- |
 | `file`          | string | No       | Plan file path (default: .opencode/plans/PLAN.md) |
 | `maxIterations` | number | No       | Max iterations (default: 0 = unlimited)           |
 
-#### rw-plan
+#### nm-plan
 
 | Parameter     | Type   | Required | Description                                                        |
 | ------------- | ------ | -------- | ------------------------------------------------------------------ |
@@ -182,14 +182,14 @@ Filename generation priority:
 
 All plans are stored in `.opencode/plans/` by default.
 
-#### rw-task
+#### nm-task
 
 | Parameter | Type   | Required | Description                                       |
 | --------- | ------ | -------- | ------------------------------------------------- |
 | `task`    | string | Yes      | Task number (1, 2, 3...) or name                  |
 | `file`    | string | No       | Plan file path (default: .opencode/plans/PLAN.md) |
 
-#### rw-loop
+#### nm-loop
 
 Direct loop mode - keeps feeding the same prompt until completion or max iterations. Ideal for iterative problem-solving like "make tests pass" or "fix the build".
 
@@ -210,8 +210,8 @@ Direct loop mode - keeps feeding the same prompt until completion or max iterati
 
 ```bash
 # Clone the repository
-git clone https://github.com/whomwah/opencode-ralph-wiggum.git
-cd opencode-ralph-wiggum
+git clone https://github.com/whomwah/opencode-nelson-muntz.git
+cd opencode-nelson-muntz
 
 # Install dependencies
 just install
@@ -229,39 +229,39 @@ This project uses [just](https://github.com/casey/just) as a command runner. Run
 
 ## Local Files and Folders
 
-Ralph creates files in your project's `.opencode/` directory:
+Nelson creates files in your project's `.opencode/` directory:
 
 ```
 .opencode/
 ├── plans/                      # Your plan files (persistent)
 │   ├── my-api.md
 │   └── another-project.md
-└── ralph-loop.local.json       # Loop state (temporary)
+└── nelson-loop.local.json      # Loop state (temporary)
 ```
 
 ### File Details
 
-| File/Folder                       | Purpose                                                              | Lifecycle                                                                             |
-| --------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `.opencode/plans/`                | Stores PLAN.md files with your tasks                                 | Persistent - you create and manage these                                              |
-| `.opencode/ralph-loop.local.json` | Tracks active loop state (iteration count, current task, session ID) | **Temporary** - created when loop starts, deleted when loop completes or is cancelled |
+| File/Folder                        | Purpose                                                              | Lifecycle                                                                             |
+| ---------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `.opencode/plans/`                 | Stores PLAN.md files with your tasks                                 | Persistent - you create and manage these                                              |
+| `.opencode/nelson-loop.local.json` | Tracks active loop state (iteration count, current task, session ID) | **Temporary** - created when loop starts, deleted when loop completes or is cancelled |
 
 ### Git Recommendations
 
 Add to your `.gitignore`:
 
 ```gitignore
-# Ralph Wiggum plugin state (temporary, local only)
-.opencode/ralph-loop.local.json
+# Nelson Muntz plugin state (temporary, local only)
+.opencode/nelson-loop.local.json
 ```
 
 Your plan files in `.opencode/plans/` can be committed if you want to share them with your team, or gitignored if they're personal.
 
 ## How It Works
 
-### Plan-Based Mode (rw-start, rw-task)
+### Plan-Based Mode (nm-start, nm-task)
 
-1. **Loop Activation**: When you call `rw-start`, the plugin reads PLAN.md and creates a state file at `.opencode/ralph-loop.local.json`
+1. **Loop Activation**: When you call `nm-start`, the plugin reads PLAN.md and creates a state file at `.opencode/nelson-loop.local.json`
 
 2. **Task Execution**: The plugin generates a prompt for the first pending task and sends it to the AI
 
@@ -273,9 +273,9 @@ Your plan files in `.opencode/plans/` can be committed if you want to share them
 
 6. **Safety Stop**: If `maxIterations` is reached before all tasks complete, the loop halts entirely for human review
 
-### Direct Loop Mode (rw-loop)
+### Direct Loop Mode (nm-loop)
 
-1. **Loop Activation**: When you call `rw-loop`, the plugin stores your prompt and creates a state file
+1. **Loop Activation**: When you call `nm-loop`, the plugin stores your prompt and creates a state file
 
 2. **Same Prompt Each Time**: Unlike plan-based mode, the exact same prompt is fed back each iteration
 
@@ -285,15 +285,15 @@ Your plan files in `.opencode/plans/` can be committed if you want to share them
 
 5. **Stops When**: The completion promise is detected OR maxIterations is reached
 
-## When to Use Ralph
+## When to Use Nelson
 
-### Plan-based mode (`rw-start`) is good for:
+### Plan-based mode (`nm-start`) is good for:
 
 - Multi-step projects with distinct phases
 - Greenfield development where you want git commits per task
 - Projects where you want to review progress task-by-task
 
-### Direct loop mode (`rw-loop`) is good for:
+### Direct loop mode (`nm-loop`) is good for:
 
 - "Make the tests pass" - iterate until green
 - "Fix the build errors" - hammer until it compiles
@@ -306,25 +306,10 @@ Your plan files in `.opencode/plans/` can be committed if you want to share them
 - Tasks with unclear success criteria
 - Production debugging (use targeted debugging instead)
 
-## Differences from Claude Code Plugin
-
-This OpenCode port has some differences from the original Claude Code plugin:
-
-| Feature           | Claude Code                 | OpenCode                 |
-| ----------------- | --------------------------- | ------------------------ |
-| Loop mechanism    | Stop hook (shell script)    | `session.idle` event     |
-| Commands          | Slash commands (`/rw-loop`) | Custom tools             |
-| State storage     | Markdown frontmatter        | JSON file                |
-| Loop continuation | Blocks exit + feeds prompt  | Sends new prompt via SDK |
-
 ## Learn More
 
-- Original technique: https://ghuntley.com/ralph/
+- Original Ralph Wiggum technique: https://ghuntley.com/ralph/
 - OpenCode Plugins: https://opencode.ai/docs/plugins/
-
-## Credits
-
-- Claude Code plugin by Daisy Hollman (Anthropic)
 
 ## License
 

@@ -1,5 +1,5 @@
-# Ralph Wiggum OpenCode Plugin
-# https://github.com/whomwah/ralph-wiggum-opencode
+# Nelson Muntz OpenCode Plugin
+# https://github.com/whomwah/opencode-nelson-muntz
 
 # List available recipes
 default:
@@ -39,20 +39,20 @@ dev:
 # Symlink plugin to global OpenCode plugins (~/.config/opencode/plugin/)
 link-local:
     mkdir -p ~/.config/opencode/plugin
-    ln -sf $(pwd)/src/index.ts ~/.config/opencode/plugin/ralph-wiggum.ts
+    ln -sf $(pwd)/src/index.ts ~/.config/opencode/plugin/nelson-muntz.ts
 
 # Symlink plugin to project OpenCode plugins (.opencode/plugin/)
 link-project:
     mkdir -p .opencode/plugin
-    ln -sf $(pwd)/src/index.ts .opencode/plugin/ralph-wiggum.ts
+    ln -sf $(pwd)/src/index.ts .opencode/plugin/nelson-muntz.ts
 
 # Remove global plugin symlink
 unlink-local:
-    rm -f ~/.config/opencode/plugin/ralph-wiggum.ts
+    rm -f ~/.config/opencode/plugin/nelson-muntz.ts
 
 # Remove project plugin symlink
 unlink-project:
-    rm -f .opencode/plugin/ralph-wiggum.ts
+    rm -f .opencode/plugin/nelson-muntz.ts
 
 # Prepare for publishing (build + types)
 prepublish: build build-types

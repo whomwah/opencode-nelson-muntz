@@ -1,5 +1,5 @@
 import { tool } from "@opencode-ai/plugin"
-import type { RalphState, PlanTask } from "./types"
+import type { NelsonState, PlanTask } from "./types"
 import { readState, writeState } from "./state"
 import { slugify, detectProjectTools } from "./utils"
 import {
@@ -13,11 +13,11 @@ import {
 import { generateSingleTaskPrompt } from "./prompts"
 
 /**
- * Create plan-related tools for Ralph Wiggum
+ * Create plan-related tools for Nelson Muntz
  */
 export function createPlanTools(directory: string) {
   return {
-    "rw-plan": tool({
+    "nm-plan": tool({
       description: `Create or view a PLAN.md file for structured task management.
 
 Usage:
@@ -26,7 +26,7 @@ Usage:
 - 'save': Saves the provided content to the plan file
 
 The plan file uses a simple markdown format with checkboxes for tasks.
-You can set a completion_promise in the file that Ralph will use.
+You can set a completion_promise in the file that Nelson will use.
 
 Filename generation (in priority order):
 1. Explicit 'file' parameter if provided
@@ -38,10 +38,10 @@ Plans are stored in .opencode/plans/ by default, allowing multiple named plans.
 
 WORKFLOW:
 1. User asks for a plan (e.g., "Create a plan for a REST API")
-2. Call rw-plan with action='create' and name/description to get the target file path
+2. Call nm-plan with action='create' and name/description to get the target file path
 3. Generate an appropriate plan based on the user's request and show it to them
 4. User may request changes - refine the plan in conversation
-5. When user approves, call rw-plan with action='save' and content=<the plan>
+5. When user approves, call nm-plan with action='save' and content=<the plan>
 
 PLAN FORMAT:
 The plan should be markdown with:
@@ -89,7 +89,7 @@ The plan should be markdown with:
         if (action === "view") {
           const content = await readPlanFile(directory, planFile)
           if (!content) {
-            return `No plan file found at ${planFile}. Use rw-plan to create one.`
+            return `No plan file found at ${planFile}. Use nm-plan to create one.`
           }
 
           const plan = parsePlanFile(content)
@@ -129,15 +129,15 @@ The plan should be markdown with:
           return `Saved plan to ${planFile}
 
 You can now use:
-- rw-tasks: List all tasks
-- rw-start: Start the Ralph loop with this plan
-- rw-task <num>: Execute a single task`
+- nm-tasks: List all tasks
+- nm-start: Start the Nelson loop with this plan
+- nm-task <num>: Execute a single task`
         }
 
         // Create action - return target path for assistant to generate plan content
         const existingContent = await readPlanFile(directory, planFile)
         if (existingContent) {
-          return `Plan file already exists at ${planFile}. Use rw-plan with action='view' to see it, or delete it first to create a new one.`
+          return `Plan file already exists at ${planFile}. Use nm-plan with action='view' to see it, or delete it first to create a new one.`
         }
 
         return `Ready to create plan.
@@ -146,15 +146,15 @@ Target file: ${planFile}
 
 Generate a plan for the user based on their request, then show it to them.
 When they approve (or after any revisions), save it with:
-  rw-plan action='save' file='${planFile}' content=<plan content>`
+  nm-plan action='save' file='${planFile}' content=<plan content>`
       },
     }),
 
-    "rw-tasks": tool({
+    "nm-tasks": tool({
       description: `List all tasks from a PLAN.md file.
 
 Shows task IDs, titles, and completion status. Use the task ID or number
-with rw-task to execute a specific task.`,
+with nm-task to execute a specific task.`,
       args: {
         file: tool.schema
           .string()
@@ -166,7 +166,7 @@ with rw-task to execute a specific task.`,
         const content = await readPlanFile(directory, planFile)
 
         if (!content) {
-          return `No plan file found at ${planFile}. Use rw-plan to create one.`
+          return `No plan file found at ${planFile}. Use nm-plan to create one.`
         }
 
         const plan = parsePlanFile(content)
@@ -189,15 +189,15 @@ with rw-task to execute a specific task.`,
         }
 
         output += `\nCommands:\n`
-        output += `- rw-task 1      Execute task #1\n`
-        output += `- rw-task "name" Execute task by name\n`
-        output += `- rw-start       Start loop for all tasks`
+        output += `- nm-task 1      Execute task #1\n`
+        output += `- nm-task "name" Execute task by name\n`
+        output += `- nm-start       Start loop for all tasks`
 
         return output
       },
     }),
 
-    "rw-task": tool({
+    "nm-task": tool({
       description: `Execute a single task from the PLAN.md file (one iteration only).
 
 Specify task by number (1, 2, 3...) or by name/keyword.
@@ -217,7 +217,7 @@ No git commit is created - you can review the changes and commit manually.`,
         const content = await readPlanFile(directory, planFile)
 
         if (!content) {
-          return `No plan file found at ${planFile}. Use rw-plan to create one.`
+          return `No plan file found at ${planFile}. Use nm-plan to create one.`
         }
 
         const plan = parsePlanFile(content)
@@ -243,7 +243,7 @@ No git commit is created - you can review the changes and commit manually.`,
             task = plan.tasks[idx]
             resolvedTaskNum = idx + 1
           } else {
-            return `Task "${args.task}" not found. Use rw-tasks to see available tasks.`
+            return `Task "${args.task}" not found. Use nm-tasks to see available tasks.`
           }
         }
 
@@ -254,14 +254,14 @@ No git commit is created - you can review the changes and commit manually.`,
         // Check for existing loop
         const existingState = await readState(directory)
         if (existingState?.active) {
-          return `A Ralph loop is already active (iteration ${existingState.iteration}). Use rw-cancel to stop it first.`
+          return `A Nelson loop is already active (iteration ${existingState.iteration}). Use nm-cancel to stop it first.`
         }
 
         // Get session ID from tool context
         const sessionId = (toolCtx as { sessionID?: string })?.sessionID || null
 
         // Create state for single-task mode
-        const state: RalphState = {
+        const state: NelsonState = {
           active: true,
           iteration: 1,
           maxIterations: 1, // Single iteration only
@@ -334,10 +334,10 @@ commit your changes manually when ready.`
       },
     }),
 
-    "rw-complete": tool({
+    "nm-complete": tool({
       description: `Mark a task as complete in the PLAN.md file.
 
-Use after successfully completing a task with rw-task.`,
+Use after successfully completing a task with nm-task.`,
       args: {
         task: tool.schema.string().describe("Task number (1, 2, 3...) or task name"),
         file: tool.schema
@@ -388,10 +388,10 @@ Use after successfully completing a task with rw-task.`,
       },
     }),
 
-    "rw-start": tool({
-      description: `Start a Ralph loop using tasks from a PLAN.md file.
+    "nm-start": tool({
+      description: `Start a Nelson loop using tasks from a PLAN.md file.
 
-This is the simplest way to start Ralph - just say "start ralph loop" or use this tool.
+This is the simplest way to start Nelson - just say "start nelson loop" or use this tool.
 It reads your PLAN.md, builds a prompt from all pending tasks, and starts iterating.
 
 The loop will:
@@ -420,9 +420,9 @@ Each task gets its own git commit, so you can review them separately later.`,
           return `No plan file found at ${planFile}.
 
 To get started:
-1. Use rw-plan to create a plan file
+1. Use nm-plan to create a plan file
 2. Edit the plan with your tasks
-3. Run rw-start again`
+3. Run nm-start again`
         }
 
         const plan = parsePlanFile(content)
@@ -439,7 +439,7 @@ To get started:
         // Check for existing loop
         const existingState = await readState(directory)
         if (existingState?.active) {
-          return `A Ralph loop is already active (iteration ${existingState.iteration}). Use rw-cancel to stop it first.`
+          return `A Nelson loop is already active (iteration ${existingState.iteration}). Use nm-cancel to stop it first.`
         }
 
         // Find the first pending task
@@ -460,7 +460,7 @@ To get started:
         const sessionId = (toolCtx as { sessionID?: string })?.sessionID || null
 
         // Create state with loop mode
-        const state: RalphState = {
+        const state: NelsonState = {
           active: true,
           iteration: 1,
           maxIterations,
@@ -475,7 +475,7 @@ To get started:
         }
         await writeState(directory, state)
 
-        let output = `🔄 Ralph loop started from ${planFile}!
+        let output = `🔄 Nelson loop started from ${planFile}!
 
 Plan: ${plan.title || "Untitled"}
 Tasks: ${pendingTasks.length} pending, ${plan.tasks.length - pendingTasks.length} complete

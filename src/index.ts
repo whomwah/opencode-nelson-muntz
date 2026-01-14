@@ -9,7 +9,7 @@ import { generateSingleTaskPrompt } from "./prompts"
 import { createLoopTools } from "./loop-tools"
 import { createPlanTools } from "./plan-tools"
 
-const RalphWiggumPlugin: Plugin = async (ctx) => {
+const NelsonMuntzPlugin: Plugin = async (ctx) => {
   const { directory, client } = ctx
 
   // Helper to check if completion promise is in any message parts
@@ -46,7 +46,7 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
   }
 
   return {
-    // Listen for session idle to continue the Ralph loop
+    // Listen for session idle to continue the Nelson loop
     event: async ({ event }) => {
       if (event.type !== "session.idle") return
 
@@ -58,9 +58,9 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
       if (!sessionId) {
         await client.app.log({
           body: {
-            service: "ralph-wiggum",
+            service: "nelson-muntz",
             level: "warn",
-            message: "Ralph loop: No session ID available, cannot continue loop.",
+            message: "Nelson loop: No session ID available, cannot continue loop.",
           },
         })
         return
@@ -84,7 +84,7 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
             )
             await client.app.log({
               body: {
-                service: "ralph-wiggum",
+                service: "nelson-muntz",
                 level: "info",
                 message: `✓ Task completed: ${result.taskTitle}`,
               },
@@ -98,7 +98,7 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
           } catch (err) {
             await client.app.log({
               body: {
-                service: "ralph-wiggum",
+                service: "nelson-muntz",
                 level: "error",
                 message: `Failed to mark task complete: ${err}`,
               },
@@ -128,7 +128,7 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
             }
             await client.app.log({
               body: {
-                service: "ralph-wiggum",
+                service: "nelson-muntz",
                 level: "info",
                 message: logMsg,
               },
@@ -136,7 +136,7 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
           } catch (err) {
             await client.app.log({
               body: {
-                service: "ralph-wiggum",
+                service: "nelson-muntz",
                 level: "error",
                 message: `Failed to complete task ${state.currentTaskNum}: ${err}`,
               },
@@ -149,7 +149,7 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
         if (!content) {
           await client.app.log({
             body: {
-              service: "ralph-wiggum",
+              service: "nelson-muntz",
               level: "error",
               message: `Plan file not found: ${state.planFile}`,
             },
@@ -165,14 +165,14 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
         if (nextPendingIdx === -1) {
           await client.app.log({
             body: {
-              service: "ralph-wiggum",
+              service: "nelson-muntz",
               level: "info",
               message: `🎉 All ${plan.tasks.length} tasks complete!`,
             },
           })
           await client.tui.showToast({
             body: {
-              message: `🎉 Ralph loop: All ${plan.tasks.length} tasks complete!`,
+              message: `🎉 Nelson loop: All ${plan.tasks.length} tasks complete!`,
               variant: "success",
             },
           })
@@ -186,14 +186,14 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
           if (completed) {
             await client.app.log({
               body: {
-                service: "ralph-wiggum",
+                service: "nelson-muntz",
                 level: "info",
-                message: `Ralph loop: Detected <promise>${state.completionPromise}</promise> - loop complete!`,
+                message: `Nelson loop: Detected <promise>${state.completionPromise}</promise> - loop complete!`,
               },
             })
             await client.tui.showToast({
               body: {
-                message: `Ralph loop completed after ${state.iteration} iterations!`,
+                message: `Nelson loop completed after ${state.iteration} iterations!`,
                 variant: "success",
               },
             })
@@ -206,14 +206,14 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
         if (state.maxIterations > 0 && state.iteration >= state.maxIterations) {
           await client.app.log({
             body: {
-              service: "ralph-wiggum",
+              service: "nelson-muntz",
               level: "info",
-              message: `Ralph loop: Max iterations (${state.maxIterations}) reached.`,
+              message: `Nelson loop: Max iterations (${state.maxIterations}) reached.`,
             },
           })
           await client.tui.showToast({
             body: {
-              message: `Ralph loop: Max iterations (${state.maxIterations}) reached.`,
+              message: `Nelson loop: Max iterations (${state.maxIterations}) reached.`,
               variant: "warning",
             },
           })
@@ -233,11 +233,11 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
         const taskPrompt = generateSingleTaskPrompt(plan, nextTask, nextTaskNum, true, projectTools)
         const completedCount = plan.tasks.filter((t) => t.status === "completed").length
 
-        const systemMsg = `🔄 Ralph iteration ${state.iteration} | Task ${nextTaskNum}/${plan.tasks.length} (${completedCount} complete)`
+        const systemMsg = `🔄 Nelson iteration ${state.iteration} | Task ${nextTaskNum}/${plan.tasks.length} (${completedCount} complete)`
 
         await client.app.log({
           body: {
-            service: "ralph-wiggum",
+            service: "nelson-muntz",
             level: "info",
             message: systemMsg,
           },
@@ -258,31 +258,31 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
         } catch (error) {
           await client.app.log({
             body: {
-              service: "ralph-wiggum",
+              service: "nelson-muntz",
               level: "error",
-              message: `Ralph loop: Failed to send prompt - ${error}`,
+              message: `Nelson loop: Failed to send prompt - ${error}`,
             },
           })
         }
         return
       }
 
-      // Legacy mode (for ralph-loop tool without plan file)
+      // Legacy mode (for nm-loop tool without plan file)
       // Check if completion promise was detected in the last message
       if (state.completionPromise) {
         const completed = await checkCompletionInSession(sessionId, state.completionPromise)
         if (completed) {
           await client.app.log({
             body: {
-              service: "ralph-wiggum",
+              service: "nelson-muntz",
               level: "info",
-              message: `Ralph loop: Detected <promise>${state.completionPromise}</promise> - loop complete!`,
+              message: `Nelson loop: Detected <promise>${state.completionPromise}</promise> - loop complete!`,
             },
           })
 
           await client.tui.showToast({
             body: {
-              message: `Ralph loop completed after ${state.iteration} iterations!`,
+              message: `Nelson loop completed after ${state.iteration} iterations!`,
               variant: "success",
             },
           })
@@ -296,15 +296,15 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
       if (state.maxIterations > 0 && state.iteration >= state.maxIterations) {
         await client.app.log({
           body: {
-            service: "ralph-wiggum",
+            service: "nelson-muntz",
             level: "info",
-            message: `Ralph loop: Max iterations (${state.maxIterations}) reached.`,
+            message: `Nelson loop: Max iterations (${state.maxIterations}) reached.`,
           },
         })
 
         await client.tui.showToast({
           body: {
-            message: `Ralph loop: Max iterations (${state.maxIterations}) reached.`,
+            message: `Nelson loop: Max iterations (${state.maxIterations}) reached.`,
             variant: "warning",
           },
         })
@@ -320,14 +320,14 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
       // Build system message
       let systemMsg: string
       if (state.completionPromise) {
-        systemMsg = `🔄 Ralph iteration ${state.iteration} | To stop: output <promise>${state.completionPromise}</promise> (ONLY when statement is TRUE - do not lie to exit!)`
+        systemMsg = `🔄 Nelson iteration ${state.iteration} | To stop: output <promise>${state.completionPromise}</promise> (ONLY when statement is TRUE - do not lie to exit!)`
       } else {
-        systemMsg = `🔄 Ralph iteration ${state.iteration} | No completion promise set - loop runs infinitely`
+        systemMsg = `🔄 Nelson iteration ${state.iteration} | No completion promise set - loop runs infinitely`
       }
 
       await client.app.log({
         body: {
-          service: "ralph-wiggum",
+          service: "nelson-muntz",
           level: "info",
           message: systemMsg,
         },
@@ -349,15 +349,15 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
       } catch (error) {
         await client.app.log({
           body: {
-            service: "ralph-wiggum",
+            service: "nelson-muntz",
             level: "error",
-            message: `Ralph loop: Failed to send prompt - ${error}`,
+            message: `Nelson loop: Failed to send prompt - ${error}`,
           },
         })
       }
     },
 
-    // Custom tools for Ralph loop management
+    // Custom tools for Nelson loop management
     tool: {
       ...createLoopTools(directory),
       ...createPlanTools(directory),
@@ -365,4 +365,4 @@ const RalphWiggumPlugin: Plugin = async (ctx) => {
   }
 }
 
-export { RalphWiggumPlugin }
+export { NelsonMuntzPlugin }
