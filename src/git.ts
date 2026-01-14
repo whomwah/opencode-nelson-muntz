@@ -62,12 +62,12 @@ export async function createGitCommit(
   if (separatorIdx !== -1) {
     const heading = cleanTitle.slice(0, separatorIdx).trim()
     const description = cleanTitle.slice(separatorIdx + 3).trim()
-    commitSubject = `feat(ralph): task ${taskNum} - ${heading}`
+    commitSubject = `feat(nelson): task ${taskNum} - ${heading}`
     if (description) {
       commitBody = description
     }
   } else {
-    commitSubject = `feat(ralph): task ${taskNum} - ${cleanTitle}`
+    commitSubject = `feat(nelson): task ${taskNum} - ${cleanTitle}`
   }
 
   const commitArgs = ["commit", "-m", commitSubject]

@@ -1,7 +1,7 @@
 /**
- * State for the Ralph Wiggum loop, persisted to .opencode/ralph-loop.local.json
+ * State for the Nelson Muntz loop, persisted to .opencode/nelson-loop.local.json
  */
-export interface RalphState {
+export interface NelsonState {
   active: boolean
   iteration: number
   maxIterations: number

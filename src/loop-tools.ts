@@ -1,19 +1,19 @@
 import { tool } from "@opencode-ai/plugin"
-import type { RalphState } from "./types"
+import type { NelsonState } from "./types"
 import { readState, writeState, removeState } from "./state"
 import { extractPromiseText } from "./utils"
 
 /**
- * Create loop-related tools for Ralph Wiggum
+ * Create loop-related tools for Nelson Muntz
  */
 export function createLoopTools(directory: string) {
   return {
-    "rw-loop": tool({
-      description: `Start a Ralph Wiggum loop - an iterative development loop that continues until completion.
+    "nm-loop": tool({
+      description: `Start a Nelson Muntz loop - an iterative development loop that continues until completion.
 
 Usage: Call this tool with your task prompt and optional configuration.
 
-The Ralph loop will:
+The Nelson loop will:
 1. Execute your task prompt
 2. When the session becomes idle, automatically feed the SAME prompt back
 3. Continue until the completion promise is detected or max iterations reached
@@ -44,14 +44,14 @@ Example: Start a loop to build a REST API that runs until "DONE" is output.`,
         // Check if there's already an active loop
         const existingState = await readState(directory)
         if (existingState?.active) {
-          return `Error: A Ralph loop is already active (iteration ${existingState.iteration}). Use the rw-cancel tool to cancel it first.`
+          return `Error: A Nelson loop is already active (iteration ${existingState.iteration}). Use the nm-cancel tool to cancel it first.`
         }
 
         // Get session ID from tool context
         const sessionId = (toolCtx as { sessionID?: string })?.sessionID || null
 
         // Create state file
-        const state: RalphState = {
+        const state: NelsonState = {
           active: true,
           iteration: 1,
           maxIterations: maxIterations,
@@ -62,7 +62,7 @@ Example: Start a loop to build a REST API that runs until "DONE" is output.`,
         }
         await writeState(directory, state)
 
-        let output = `🔄 Ralph loop activated!
+        let output = `🔄 Nelson loop activated!
 
 Iteration: 1
 Max iterations: ${maxIterations > 0 ? maxIterations : "unlimited"}
@@ -76,7 +76,7 @@ The loop is now active. When the session becomes idle, the SAME PROMPT will be
 fed back to you. You'll see your previous work in files, creating a
 self-referential loop where you iteratively improve on the same task.
 
-To stop the loop early, use rw-cancel.
+To stop the loop early, use nm-cancel.
 
 ---
 
@@ -86,7 +86,7 @@ ${prompt}`
           output += `
 
 ═══════════════════════════════════════════════════════════
-CRITICAL - Ralph Loop Completion Promise
+CRITICAL - Nelson Loop Completion Promise
 ═══════════════════════════════════════════════════════════
 
 To complete this loop, output this EXACT text:
@@ -110,34 +110,34 @@ IMPORTANT - Do not circumvent the loop:
       },
     }),
 
-    "rw-cancel": tool({
-      description: "Cancel an active Ralph Wiggum loop",
+    "nm-cancel": tool({
+      description: "Cancel an active Nelson Muntz loop",
       args: {},
       async execute() {
         const state = await readState(directory)
 
         if (!state || !state.active) {
-          return "No active Ralph loop found."
+          return "No active Nelson loop found."
         }
 
         const iteration = state.iteration
         await removeState(directory)
 
-        return `🛑 Cancelled Ralph loop (was at iteration ${iteration})`
+        return `🛑 Cancelled Nelson loop (was at iteration ${iteration})`
       },
     }),
 
-    "rw-status": tool({
-      description: "Check the status of the current Ralph Wiggum loop",
+    "nm-status": tool({
+      description: "Check the status of the current Nelson Muntz loop",
       args: {},
       async execute() {
         const state = await readState(directory)
 
         if (!state || !state.active) {
-          return "No active Ralph loop."
+          return "No active Nelson loop."
         }
 
-        return `📊 Ralph Loop Status:
+        return `📊 Nelson Loop Status:
 - Active: ${state.active}
 - Iteration: ${state.iteration}
 - Max iterations: ${state.maxIterations > 0 ? state.maxIterations : "unlimited"}
@@ -150,7 +150,7 @@ ${state.prompt}`
       },
     }),
 
-    "rw-check-completion": tool({
+    "nm-check-completion": tool({
       description: "Check if the completion promise has been fulfilled in the given text",
       args: {
         text: tool.schema.string().describe("The text to check for completion promise"),
@@ -159,7 +159,7 @@ ${state.prompt}`
         const state = await readState(directory)
 
         if (!state || !state.active) {
-          return "No active Ralph loop."
+          return "No active Nelson loop."
         }
 
         if (!state.completionPromise) {
@@ -171,7 +171,7 @@ ${state.prompt}`
         if (promiseText && promiseText === state.completionPromise) {
           await removeState(directory)
           return `✅ Completion promise detected: <promise>${state.completionPromise}</promise>
-Ralph loop completed successfully after ${state.iteration} iterations.`
+Nelson loop completed successfully after ${state.iteration} iterations.`
         }
 
         return `❌ Completion promise NOT detected.

@@ -1,15 +1,15 @@
-# AGENTS.md - Ralph Wiggum OpenCode Plugin
+# AGENTS.md - Nelson Muntz OpenCode Plugin
 
 Guidelines for AI coding agents working in this repository.
 
 ## Project Overview
 
-TypeScript plugin for OpenCode implementing the Ralph Wiggum iterative development loop. Uses Bun as the runtime.
+TypeScript plugin for OpenCode implementing the Nelson Muntz iterative development loop. Uses Bun as the runtime.
 
 - **Language**: TypeScript (strict mode)
 - **Runtime**: Bun v1.0+
 - **Module System**: ES Modules (`"type": "module"`)
-- **Main Export**: `RalphWiggumPlugin` from `src/index.ts`
+- **Main Export**: `NelsonMuntzPlugin` from `src/index.ts`
 
 ## Build/Lint/Test Commands
 
@@ -91,13 +91,13 @@ import * as path from "path"
 
 ### Naming Conventions
 
-| Type          | Convention           | Example                   |
-| ------------- | -------------------- | ------------------------- |
-| Constants     | SCREAMING_SNAKE_CASE | `RALPH_STATE_FILE`        |
-| Interfaces    | PascalCase           | `RalphState`              |
-| Functions     | camelCase            | `readState`, `writeState` |
-| Plugin export | PascalCase           | `RalphWiggumPlugin`       |
-| Tool names    | kebab-case           | `rw-loop`, `rw-cancel`    |
+| Type          | Convention           | Example                    |
+| ------------- | -------------------- | -------------------------- |
+| Constants     | SCREAMING_SNAKE_CASE | `NELSON_STATE_FILE`        |
+| Interfaces    | PascalCase           | `NelsonState`              |
+| Functions     | camelCase            | `readState`, `writeState`  |
+| Plugin export | PascalCase           | `NelsonMuntzPlugin`        |
+| Tool names    | kebab-case           | `nm-loop`, `nm-cancel`     |
 
 ### Formatting
 
@@ -108,7 +108,7 @@ import * as path from "path"
 
 ### State Management
 
-State stored at `.opencode/ralph-loop.local.json`. Always create parent directories before writing.
+State stored at `.opencode/nelson-loop.local.json`. Always create parent directories before writing.
 
 ## How OpenCode Discovers Plugins
 

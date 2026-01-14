@@ -1,7 +1,7 @@
 {
-  "name": "opencode-ralph-wiggum",
+  "name": "@whomwah/opencode-nelson-muntz",
   "version": "1.0.0",
-  "description": "Ralph Wiggum iterative development loop plugin for OpenCode",
+  "description": "Nelson Muntz iterative development loop plugin for OpenCode",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,6 +10,9 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
+  },
+  "publishConfig": {
+    "@whomwah:registry": "https://npm.pkg.github.com"
   },
   "files": [
     "dist",
@@ -23,15 +26,15 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "link:local": "mkdir -p ~/.config/opencode/plugin && ln -sf $(pwd)/dist/index.js ~/.config/opencode/plugin/ralph-wiggum.js",
-    "link:project": "mkdir -p .opencode/plugin && ln -sf $(pwd)/dist/index.js .opencode/plugin/ralph-wiggum.js",
-    "unlink:local": "rm -f ~/.config/opencode/plugin/ralph-wiggum.js",
-    "unlink:project": "rm -f .opencode/plugin/ralph-wiggum.js"
+    "link:local": "mkdir -p ~/.config/opencode/plugin && ln -sf $(pwd)/dist/index.js ~/.config/opencode/plugin/nelson-muntz.js",
+    "link:project": "mkdir -p .opencode/plugin && ln -sf $(pwd)/dist/index.js .opencode/plugin/nelson-muntz.js",
+    "unlink:local": "rm -f ~/.config/opencode/plugin/nelson-muntz.js",
+    "unlink:project": "rm -f .opencode/plugin/nelson-muntz.js"
   },
   "keywords": [
     "opencode",
     "opencode-plugin",
-    "ralph-wiggum",
+    "nelson-muntz",
     "ai",
     "iterative-development",
     "autonomous-coding"
@@ -40,12 +43,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/whomwah/ralph-wiggum-opencode"
+    "url": "https://github.com/whomwah/opencode-nelson-muntz"
   },
   "bugs": {
-    "url": "https://github.com/whomwah/ralph-wiggum-opencode/issues"
+    "url": "https://github.com/whomwah/opencode-nelson-muntz/issues"
   },
-  "homepage": "https://github.com/whomwah/ralph-wiggum-opencode#readme",
+  "homepage": "https://github.com/whomwah/opencode-nelson-muntz#readme",
   "devDependencies": {
     "@opencode-ai/plugin": "latest",
     "@types/bun": "latest",
