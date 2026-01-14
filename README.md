@@ -79,7 +79,7 @@ just link-project  # Project: .opencode/plugin/
 
 Ralph's tools are designed to complement OpenCode's built-in Plan and Code modes:
 
-- **OpenCode Plan mode** (Ctrl+K) - For thinking, designing, and conversation without making changes
+- **OpenCode Plan mode** - For thinking, designing, and conversation without making changes
 - **OpenCode Build mode** - For executing tasks and writing code
 
 Ralph's `rw-plan` and `rw-start` tools align with this workflow:
@@ -139,6 +139,8 @@ Once your plan is saved, switch to OpenCode's Build mode and use `rw-start` to e
    ```
 
 ### Available Tools
+
+When the plugin is installed you can ask opencode for all "rw-* tasks" and it will list them.
 
 | Tool                  | Description                                            |
 | --------------------- | ------------------------------------------------------ |
