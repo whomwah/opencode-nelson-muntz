@@ -93,7 +93,6 @@ interface ProjectTools {
   hasJustfile: boolean
   hasPackageJson: boolean
   hasMakefile: boolean
-  hasCargoToml: boolean
 }
 
 async function detectProjectTools(directory: string): Promise<ProjectTools> {
@@ -106,14 +105,13 @@ async function detectProjectTools(directory: string): Promise<ProjectTools> {
     }
   }
 
-  const [hasJustfile, hasPackageJson, hasMakefile, hasCargoToml] = await Promise.all([
+  const [hasJustfile, hasPackageJson, hasMakefile] = await Promise.all([
     checkFile("justfile"),
     checkFile("package.json"),
     checkFile("Makefile"),
-    checkFile("Cargo.toml"),
   ])
 
-  return { hasJustfile, hasPackageJson, hasMakefile, hasCargoToml }
+  return { hasJustfile, hasPackageJson, hasMakefile }
 }
 
 async function readPlanFile(directory: string, planFile: string): Promise<string | null> {
@@ -323,16 +321,26 @@ function generateSingleTaskPrompt(
     prompt += `## Project Context\n${plan.overview}\n\n`
   }
 
-  // Show available project tools
+  // Show available project tools with usage instructions
   if (projectTools) {
     const tools: string[] = []
     if (projectTools.hasJustfile) tools.push("`just` (justfile)")
     if (projectTools.hasPackageJson) tools.push("`npm`/`bun` (package.json)")
     if (projectTools.hasMakefile) tools.push("`make` (Makefile)")
-    if (projectTools.hasCargoToml) tools.push("`cargo` (Cargo.toml)")
 
     if (tools.length > 0) {
       prompt += `## Available Tools\nThis project has: ${tools.join(", ")}\n\n`
+      prompt += `**IMPORTANT**: Use these project tools for build, test, and other operations:\n`
+      if (projectTools.hasJustfile) {
+        prompt += `- Run \`just\` to see all available tasks, then use \`just <task>\` for build/test/format\n`
+      }
+      if (projectTools.hasPackageJson) {
+        prompt += `- Use \`npm run <script>\` or \`bun run <script>\` for package.json scripts\n`
+      }
+      if (projectTools.hasMakefile) {
+        prompt += `- Use \`make <target>\` for Makefile targets\n`
+      }
+      prompt += `\n`
     }
   }
 
@@ -1228,14 +1236,29 @@ No git commit is created - you can review the changes and commit manually.`,
           // Detect project tools for the prompt
           const projectTools = await detectProjectTools(directory)
           const toolsInfo: string[] = []
-          if (projectTools.hasJustfile) toolsInfo.push("`just` (justfile)")
-          if (projectTools.hasPackageJson) toolsInfo.push("`npm`/`bun` (package.json)")
-          if (projectTools.hasMakefile) toolsInfo.push("`make` (Makefile)")
-          if (projectTools.hasCargoToml) toolsInfo.push("`cargo` (Cargo.toml)")
-          const toolsSection =
-            toolsInfo.length > 0
-              ? `\n## Available Tools\nThis project has: ${toolsInfo.join(", ")}\n`
-              : ""
+          const toolsUsage: string[] = []
+          if (projectTools.hasJustfile) {
+            toolsInfo.push("`just` (justfile)")
+            toolsUsage.push(
+              "- Run `just` to see all available tasks, then use `just <task>` for build/test/format",
+            )
+          }
+          if (projectTools.hasPackageJson) {
+            toolsInfo.push("`npm`/`bun` (package.json)")
+            toolsUsage.push(
+              "- Use `npm run <script>` or `bun run <script>` for package.json scripts",
+            )
+          }
+          if (projectTools.hasMakefile) {
+            toolsInfo.push("`make` (Makefile)")
+            toolsUsage.push("- Use `make <target>` for Makefile targets")
+          }
+          let toolsSection = ""
+          if (toolsInfo.length > 0) {
+            toolsSection = `\n## Available Tools\nThis project has: ${toolsInfo.join(", ")}\n\n`
+            toolsSection += `**IMPORTANT**: Use these project tools for build, test, and other operations:\n`
+            toolsSection += toolsUsage.join("\n") + "\n"
+          }
 
           // Generate a focused prompt for this single task
           const taskPrompt = `# Single Task Execution
