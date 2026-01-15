@@ -12,7 +12,7 @@
     }
   },
   "publishConfig": {
-    "@whomwah:registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "files": [
     "dist",
@@ -43,7 +43,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/whomwah/opencode-nelson-muntz"
+    "url": "git+https://github.com/whomwah/opencode-nelson-muntz.git"
   },
   "bugs": {
     "url": "https://github.com/whomwah/opencode-nelson-muntz/issues"
