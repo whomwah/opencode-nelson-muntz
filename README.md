@@ -1,5 +1,8 @@
 # Nelson Muntz Plugin for OpenCode
 
+[![CI](https://github.com/whomwah/opencode-nelson-muntz/actions/workflows/ci.yml/badge.svg)](https://github.com/whomwah/opencode-nelson-muntz/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@whomwah/opencode-nelson-muntz.svg)](https://www.npmjs.com/package/@whomwah/opencode-nelson-muntz)
+
 Plan-based iterative development loops for [OpenCode](https://opencode.ai). Create structured plans, execute tasks automatically, and commit progress as you go.
 
 > **Why "Nelson Muntz"?** This plugin is loosely based on the [Ralph Wiggum](https://ghuntley.com/ralph/) technique - a simple bash loop that repeatedly feeds an AI agent a prompt until completion. Nelson takes that core idea but adds structured planning, task tracking, and git integration. Since it's evolved beyond the original concept, it got its own Simpsons character. Ha-ha!
