@@ -1,6 +1,6 @@
 {
   "name": "@whomwah/opencode-nelson-muntz",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Nelson Muntz iterative development loop plugin for OpenCode",
   "type": "module",
   "main": "dist/index.js",

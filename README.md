@@ -1,4 +1,4 @@
-# Nelson Muntz Plugin for OpenCode (⚠️ work in progress, use at your own risk ⚠️)
+# Nelson Muntz Plugin for OpenCode
 
 Plan-based iterative development loops for [OpenCode](https://opencode.ai). Create structured plans, execute tasks automatically, and commit progress as you go.
 
@@ -47,7 +47,7 @@ Add the plugin to your `opencode.json`:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-nelson-muntz"]
+  "plugin": ["@whomwah/opencode-nelson-muntz"]
 }
 ```
 
