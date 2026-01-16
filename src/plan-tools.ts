@@ -1,4 +1,5 @@
 import { tool } from "@opencode-ai/plugin"
+import * as path from "node:path"
 import type { NelsonState, PlanTask } from "./types"
 import { readState, writeState } from "./state"
 import { slugify, detectProjectTools } from "./utils"
@@ -18,7 +19,7 @@ import { generateSingleTaskPrompt } from "./prompts"
 export function createPlanTools(directory: string) {
   return {
     "nm-plan": tool({
-      description: `Create or view a PLAN.md file for structured task management.
+      description: `Create or view a ${DEFAULT_PLAN_FILE} file for structured task management.
 
 Usage:
 - 'create': Prepares a plan (returns target path - you generate and show the plan content to the user)
@@ -151,7 +152,7 @@ When they approve (or after any revisions), save it with:
     }),
 
     "nm-tasks": tool({
-      description: `List all tasks from a PLAN.md file.
+      description: `List all tasks from ${DEFAULT_PLAN_DIR}.
 
 Shows task IDs, titles, and completion status. Use the task ID or number
 with nm-task to execute a specific task.`,
@@ -166,6 +167,30 @@ with nm-task to execute a specific task.`,
         const content = await readPlanFile(directory, planFile)
 
         if (!content) {
+          // Check if there are other plan files in the plans directory
+          const plansDir = path.join(directory, DEFAULT_PLAN_DIR)
+          const availablePlans: string[] = []
+          try {
+            const glob = new Bun.Glob("*.md")
+            for await (const file of glob.scan({ cwd: plansDir })) {
+              availablePlans.push(file)
+            }
+          } catch {
+            // Directory doesn't exist or can't be read
+          }
+
+          if (availablePlans.length > 0) {
+            let output = `No plan file found at ${planFile}.\n\n`
+            output += `Found ${availablePlans.length} available plan${availablePlans.length === 1 ? "" : "s"} in ${DEFAULT_PLAN_DIR}/:\n\n`
+            output += `| Plan File | Command |\n`
+            output += `|-----------|----------------------------------------------|\n`
+            for (const plan of availablePlans) {
+              output += `| ${plan} | \`nm-tasks file="${DEFAULT_PLAN_DIR}/${plan}"\` |\n`
+            }
+            output += `\nOr create a plan with \`Create me a plan that...\` in Plan mode.`
+            return output
+          }
+
           return `No plan file found at ${planFile}. Use nm-plan to create one.`
         }
 
@@ -198,12 +223,12 @@ with nm-task to execute a specific task.`,
     }),
 
     "nm-task": tool({
-      description: `Execute a single task from the PLAN.md file (one iteration only).
+      description: `Execute a single task from the <plan>.md file (one iteration only).
 
 Specify task by number (1, 2, 3...) or by name/keyword.
 This runs the task ONCE without looping - useful for manual step-by-step execution.
 
-When the task completes, it will automatically be marked as done in the PLAN.md file.
+When the task completes, it will automatically be marked as done in the <plan>.md file.
 No git commit is created - you can review the changes and commit manually.`,
       args: {
         task: tool.schema.string().describe("Task number (1, 2, 3...) or task name/keyword"),

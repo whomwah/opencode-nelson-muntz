@@ -91,13 +91,13 @@ import * as path from "path"
 
 ### Naming Conventions
 
-| Type          | Convention           | Example                    |
-| ------------- | -------------------- | -------------------------- |
-| Constants     | SCREAMING_SNAKE_CASE | `NELSON_STATE_FILE`        |
-| Interfaces    | PascalCase           | `NelsonState`              |
-| Functions     | camelCase            | `readState`, `writeState`  |
-| Plugin export | PascalCase           | `NelsonMuntzPlugin`        |
-| Tool names    | kebab-case           | `nm-loop`, `nm-cancel`     |
+| Type          | Convention           | Example                   |
+| ------------- | -------------------- | ------------------------- |
+| Constants     | SCREAMING_SNAKE_CASE | `NELSON_STATE_FILE`       |
+| Interfaces    | PascalCase           | `NelsonState`             |
+| Functions     | camelCase            | `readState`, `writeState` |
+| Plugin export | PascalCase           | `NelsonMuntzPlugin`       |
+| Tool names    | kebab-case           | `nm-loop`, `nm-cancel`    |
 
 ### Formatting
 

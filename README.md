@@ -133,17 +133,17 @@ Once your plan is saved, switch to OpenCode's Build mode and use `nm-start` to e
 
 ### Available Tools
 
-When the plugin is installed you can ask opencode for all "nm-* tasks" and it will list them.
+When the plugin is installed you can ask opencode for all "nm-\* tasks" and it will list them.
 
 **Primary tools (plan-based workflow):**
 
-| Tool          | Description                                            |
-| ------------- | ------------------------------------------------------ |
-| `nm-plan`     | Create or view a PLAN.md file                          |
-| `nm-start`    | Start loop from PLAN.md (auto-commits per task)        |
-| `nm-tasks`    | List all tasks from the plan                           |
-| `nm-task`     | Execute a single task (auto-completes, no commit)      |
-| `nm-complete` | Manually mark a task complete (rarely needed now)      |
+| Tool          | Description                                       |
+| ------------- | ------------------------------------------------- |
+| `nm-plan`     | Create or view a PLAN.md file                     |
+| `nm-start`    | Start loop from PLAN.md (auto-commits per task)   |
+| `nm-tasks`    | List all tasks from the plan                      |
+| `nm-task`     | Execute a single task (auto-completes, no commit) |
+| `nm-complete` | Manually mark a task complete (rarely needed now) |
 
 **Secondary tools (direct loop mode):**
 
