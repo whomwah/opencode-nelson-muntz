@@ -39,20 +39,20 @@ dev:
 # Symlink plugin to global OpenCode plugins (~/.config/opencode/plugin/)
 link-local:
     mkdir -p ~/.config/opencode/plugin
-    ln -sf $(pwd)/src/index.ts ~/.config/opencode/plugin/nelson-muntz.ts
+    ln -sf $(pwd)/dist/index.js ~/.config/opencode/plugin/nelson-muntz.js
 
 # Symlink plugin to project OpenCode plugins (.opencode/plugin/)
 link-project:
     mkdir -p .opencode/plugin
-    ln -sf $(pwd)/src/index.ts .opencode/plugin/nelson-muntz.ts
+    ln -sf $(pwd)/dist/index.js .opencode/plugin/nelson-muntz.js
 
 # Remove global plugin symlink
 unlink-local:
-    rm -f ~/.config/opencode/plugin/nelson-muntz.ts
+    rm -f ~/.config/opencode/plugin/nelson-muntz.js
 
 # Remove project plugin symlink
 unlink-project:
-    rm -f .opencode/plugin/nelson-muntz.ts
+    rm -f .opencode/plugin/nelson-muntz.js
 
 # Prepare for publishing (build + types)
 prepublish: build build-types
