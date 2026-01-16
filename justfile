@@ -57,6 +57,14 @@ unlink-project:
 # Prepare for publishing (build + types)
 prepublish: build build-types
 
+# Login to npm registry
+npm-login:
+    npm adduser
+
+# Publish package to npm (public access)
+npm-publish: prepublish
+    npm publish --access public
+
 # Clean build artifacts
 clean:
     rm -rf dist
