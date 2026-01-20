@@ -39,37 +39,13 @@ export function createPlanTools(directory: string) {
 
   return {
     "nm-plan": tool({
-      description: `Create or view a ${DEFAULT_PLAN_FILE} file for structured task management.
+      description: `Create or view a plan file for structured task management.
 
-Usage:
-- 'create': Prepares a plan (returns target path - you generate and show the plan content to the user)
-- 'view': Shows the current plan and its tasks
-- 'save': Saves the provided content to the plan file
+Actions: 'create' (prepare), 'view' (show), 'save' (write content)
+Plans stored in .opencode/plans/ as markdown with checkbox tasks.
+Filename: file param > slugified name > slugified description > "plan.md"
 
-The plan file uses a simple markdown format with checkboxes for tasks.
-You can set a completion_promise in the file that Nelson will use.
-
-Filename generation (in priority order):
-1. Explicit 'file' parameter if provided
-2. Slugified 'name' parameter (e.g., "My API" → my-api.md)
-3. Slugified 'description' parameter
-4. Falls back to "plan.md"
-
-Plans are stored in .opencode/plans/ by default, allowing multiple named plans.
-
-WORKFLOW:
-1. User asks for a plan (e.g., "Create a plan for a REST API")
-2. Call nm-plan with action='create' and name/description to get the target file path
-3. Generate an appropriate plan based on the user's request and show it to them
-4. User may request changes - refine the plan in conversation
-5. When user approves, call nm-plan with action='save' and content=<the plan>
-
-PLAN FORMAT:
-The plan should be markdown with:
-- # Title
-- ## Overview section with project context
-- ## Tasks section with checkbox items: - [ ] **Task title**
-- Optional: completion_promise: SOME_PHRASE (for auto-completion detection)`,
+Plan format: # Title, ## Overview, ## Tasks with - [ ] **Task**, optional completion_promise.`,
       args: {
         action: tool.schema
           .string()
@@ -172,10 +148,7 @@ When they approve (or after any revisions), save it with:
     }),
 
     "nm-plans": tool({
-      description: `List all plan files in ${DEFAULT_PLAN_DIR}.
-
-Shows available plans that can be used with other nm-* tools.
-Use the plan name with the 'name' parameter in nm-tasks, nm-task, nm-start, etc.`,
+      description: `List all plan files in ${DEFAULT_PLAN_DIR}. Use plan names with nm-tasks, nm-task, nm-start.`,
       args: {},
       async execute() {
         const plans = await listPlanFiles(directory)
@@ -209,14 +182,7 @@ Use the plan name with the 'name' parameter in nm-tasks, nm-task, nm-start, etc.
     }),
 
     "nm-tasks": tool({
-      description: `List all tasks from ${DEFAULT_PLAN_DIR}.
-
-Shows task IDs, titles, and completion status. Use the task ID or number
-with nm-task to execute a specific task.
-
-You can specify the plan by:
-- name: A plan name like "rest-api" or "My API" (resolves to .opencode/plans/{slug}.md)
-- file: An explicit file path like ".opencode/plans/custom.md"`,
+      description: `List tasks from a plan. Shows IDs, titles, status. Specify plan by name or file param.`,
       args: {
         name: tool.schema
           .string()
@@ -267,17 +233,7 @@ You can specify the plan by:
     }),
 
     "nm-task": tool({
-      description: `Execute a single task from the <plan>.md file (one iteration only).
-
-Specify task by number (1, 2, 3...) or by name/keyword.
-This runs the task ONCE without looping - useful for manual step-by-step execution.
-
-You can specify the plan by:
-- name: A plan name like "rest-api" or "My API" (resolves to .opencode/plans/{slug}.md)
-- file: An explicit file path like ".opencode/plans/custom.md"
-
-When the task completes, it will automatically be marked as done in the <plan>.md file.
-No git commit is created - you can review the changes and commit manually.`,
+      description: `Execute a single task (no loop). Specify by number or name. Auto-marks done, no commit.`,
       args: {
         task: tool.schema.string().describe("Task number (1, 2, 3...) or task name/keyword"),
         name: tool.schema
@@ -415,13 +371,7 @@ commit your changes manually when ready.`
     }),
 
     "nm-complete": tool({
-      description: `Mark a task as complete in the PLAN.md file.
-
-Use after successfully completing a task with nm-task.
-
-You can specify the plan by:
-- name: A plan name like "rest-api" or "My API" (resolves to .opencode/plans/{slug}.md)
-- file: An explicit file path like ".opencode/plans/custom.md"`,
+      description: `Mark a task complete in plan file. Use after nm-task. Specify plan by name or file.`,
       args: {
         task: tool.schema.string().describe("Task number (1, 2, 3...) or task name"),
         name: tool.schema
@@ -480,22 +430,7 @@ You can specify the plan by:
     }),
 
     "nm-start": tool({
-      description: `Start a Nelson loop using tasks from a PLAN.md file.
-
-This is the simplest way to start Nelson - just say "start nelson loop" or use this tool.
-It reads your PLAN.md, builds a prompt from all pending tasks, and starts iterating.
-
-You can specify the plan by:
-- name: A plan name like "rest-api" or "My API" (resolves to .opencode/plans/{slug}.md)
-- file: An explicit file path like ".opencode/plans/custom.md"
-
-The loop will:
-1. Read the plan file and extract all pending tasks
-2. Work through each task one at a time
-3. After each task: mark it complete AND create a git commit
-4. Continue until all tasks are complete (if completion_promise is set)
-
-Each task gets its own git commit, so you can review them separately later.`,
+      description: `Start Nelson loop from a plan. Works through pending tasks, auto-commits each. Specify plan by name or file.`,
       args: {
         name: tool.schema
           .string()

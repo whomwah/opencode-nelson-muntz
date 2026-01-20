@@ -9,20 +9,8 @@ import { extractPromiseText } from "./utils"
 export function createLoopTools(directory: string) {
   return {
     "nm-loop": tool({
-      description: `Start a Nelson Muntz loop - an iterative development loop that continues until completion.
-
-Usage: Call this tool with your task prompt and optional configuration.
-
-The Nelson loop will:
-1. Execute your task prompt
-2. When the session becomes idle, automatically feed the SAME prompt back
-3. Continue until the completion promise is detected or max iterations reached
-
-Options:
-- maxIterations: Maximum number of iterations (0 = unlimited, default: 2)
-- completionPromise: Text that signals completion when wrapped in <promise> tags
-
-Example: Start a loop to build a REST API that runs until "DONE" is output.`,
+      description: `Start iterative development loop. Repeats prompt on idle until completion promise or max iterations.
+Options: maxIterations (default 2, 0=unlimited), completionPromise (text to signal done via <promise> tags).`,
       args: {
         prompt: tool.schema.string().describe("The task prompt to execute repeatedly"),
         maxIterations: tool.schema
