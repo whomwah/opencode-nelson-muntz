@@ -1,8 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import * as path from "node:path"
-import * as os from "node:os"
-import * as fs from "node:fs/promises"
-import { extractPromiseText, slugify, detectProjectTools } from "./utils"
+import { extractPromiseText, slugify } from "./utils"
 
 describe("extractPromiseText", () => {
   test("extracts text from promise tags", () => {
@@ -92,97 +89,5 @@ describe("slugify", () => {
 
   test("handles mixed special characters", () => {
     expect(slugify("My API's Test! (v2)")).toBe("my-apis-test-v2")
-  })
-})
-
-describe("detectProjectTools", () => {
-  let tempDir: string
-
-  const createTempDir = async (): Promise<string> => {
-    const dir = path.join(os.tmpdir(), `nelson-test-${Date.now()}`)
-    await fs.mkdir(dir, { recursive: true })
-    return dir
-  }
-
-  const cleanup = async (dir: string): Promise<void> => {
-    try {
-      await fs.rm(dir, { recursive: true, force: true })
-    } catch {
-      // Ignore cleanup errors
-    }
-  }
-
-  test("detects justfile", async () => {
-    tempDir = await createTempDir()
-    try {
-      await fs.writeFile(path.join(tempDir, "justfile"), "build:\n\techo build")
-      const result = await detectProjectTools(tempDir)
-      expect(result.hasJustfile).toBe(true)
-      expect(result.hasPackageJson).toBe(false)
-      expect(result.hasMakefile).toBe(false)
-    } finally {
-      await cleanup(tempDir)
-    }
-  })
-
-  test("detects package.json", async () => {
-    tempDir = await createTempDir()
-    try {
-      await fs.writeFile(path.join(tempDir, "package.json"), "{}")
-      const result = await detectProjectTools(tempDir)
-      expect(result.hasJustfile).toBe(false)
-      expect(result.hasPackageJson).toBe(true)
-      expect(result.hasMakefile).toBe(false)
-    } finally {
-      await cleanup(tempDir)
-    }
-  })
-
-  test("detects Makefile", async () => {
-    tempDir = await createTempDir()
-    try {
-      await fs.writeFile(path.join(tempDir, "Makefile"), "build:\n\techo build")
-      const result = await detectProjectTools(tempDir)
-      expect(result.hasJustfile).toBe(false)
-      expect(result.hasPackageJson).toBe(false)
-      expect(result.hasMakefile).toBe(true)
-    } finally {
-      await cleanup(tempDir)
-    }
-  })
-
-  test("detects multiple tools", async () => {
-    tempDir = await createTempDir()
-    try {
-      await fs.writeFile(path.join(tempDir, "justfile"), "")
-      await fs.writeFile(path.join(tempDir, "package.json"), "{}")
-      await fs.writeFile(path.join(tempDir, "Makefile"), "")
-      const result = await detectProjectTools(tempDir)
-      expect(result.hasJustfile).toBe(true)
-      expect(result.hasPackageJson).toBe(true)
-      expect(result.hasMakefile).toBe(true)
-    } finally {
-      await cleanup(tempDir)
-    }
-  })
-
-  test("returns all false for empty directory", async () => {
-    tempDir = await createTempDir()
-    try {
-      const result = await detectProjectTools(tempDir)
-      expect(result.hasJustfile).toBe(false)
-      expect(result.hasPackageJson).toBe(false)
-      expect(result.hasMakefile).toBe(false)
-    } finally {
-      await cleanup(tempDir)
-    }
-  })
-
-  test("handles non-existent directory", async () => {
-    const nonExistent = path.join(os.tmpdir(), `non-existent-${Date.now()}`)
-    const result = await detectProjectTools(nonExistent)
-    expect(result.hasJustfile).toBe(false)
-    expect(result.hasPackageJson).toBe(false)
-    expect(result.hasMakefile).toBe(false)
   })
 })
