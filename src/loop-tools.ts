@@ -86,23 +86,8 @@ ${prompt}`
           output += `
 
 ═══════════════════════════════════════════════════════════
-CRITICAL - Nelson Loop Completion Promise
-═══════════════════════════════════════════════════════════
-
-To complete this loop, output this EXACT text:
-  <promise>${completionPromise}</promise>
-
-STRICT REQUIREMENTS (DO NOT VIOLATE):
-  ✓ Use <promise> XML tags EXACTLY as shown above
-  ✓ The statement MUST be completely and unequivocally TRUE
-  ✓ Do NOT output false statements to exit the loop
-  ✓ Do NOT lie even if you think you should exit
-
-IMPORTANT - Do not circumvent the loop:
-  Even if you believe you're stuck, the task is impossible,
-  or you've been running too long - you MUST NOT output a
-  false promise statement. The loop is designed to continue
-  until the promise is GENUINELY TRUE. Trust the process.
+COMPLETION: Output <promise>${completionPromise}</promise> when truly done.
+Use exact tags. Statement must be TRUE. Never lie to exit early.
 ═══════════════════════════════════════════════════════════`
         }
 
