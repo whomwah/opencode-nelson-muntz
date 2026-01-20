@@ -230,14 +230,11 @@ const NelsonMuntzPlugin: Plugin = async (ctx) => {
         await writeState(directory, state)
 
         const projectTools = await detectProjectTools(directory)
-        const taskPrompt = generateSingleTaskPrompt(
-          plan,
-          nextTask,
-          nextTaskNum,
-          true,
+        const isCompact = state.iteration > 1
+        const taskPrompt = generateSingleTaskPrompt(plan, nextTask, nextTaskNum, true, {
+          compact: isCompact,
           projectTools,
-          state.iteration,
-        )
+        })
         const completedCount = plan.tasks.filter((t) => t.status === "completed").length
 
         const systemMsg = `🔄 Nelson iteration ${state.iteration} | Task ${nextTaskNum}/${plan.tasks.length} (${completedCount} complete)`

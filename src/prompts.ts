@@ -1,22 +1,36 @@
 import type { ParsedPlan, PlanTask, ProjectTools } from "./types"
 
 /**
+ * Options for generating task prompts
+ */
+export interface PromptOptions {
+  /** Use compact format (omits overview, task list, detailed instructions) */
+  compact?: boolean
+  /** Detected project tools */
+  projectTools?: ProjectTools
+}
+
+/**
  * Generate a prompt for executing a single task from a plan
- * On iteration > 1, uses a compact format to reduce token usage
+ *
+ * @param plan - The parsed plan
+ * @param task - The current task to execute
+ * @param taskNum - 1-based task number
+ * @param isLoopMode - Whether running in loop mode (affects instructions)
+ * @param options - Optional settings including compact mode and project tools
  */
 export function generateSingleTaskPrompt(
   plan: ParsedPlan,
   task: PlanTask,
   taskNum: number,
   isLoopMode: boolean,
-  projectTools?: ProjectTools,
-  iteration?: number,
+  options?: PromptOptions,
 ): string {
-  const isFirstIteration = !iteration || iteration <= 1
+  const { compact = false, projectTools } = options || {}
   const completedCount = plan.tasks.filter((t) => t.status === "completed").length
 
-  // Compact format for subsequent iterations
-  if (!isFirstIteration) {
+  // Compact format: minimal context for subsequent iterations
+  if (compact) {
     let prompt = `## Task ${taskNum}/${plan.tasks.length} (${completedCount} done)\n\n`
     prompt += `**${task.title}**\n\n`
     prompt += task.description || "No description."
@@ -24,7 +38,7 @@ export function generateSingleTaskPrompt(
     return prompt
   }
 
-  // Full format for first iteration
+  // Full format: complete context for first iteration
   let prompt = `# ${plan.title || "Project Plan"}\n\n`
 
   if (plan.overview) {

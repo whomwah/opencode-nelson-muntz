@@ -546,14 +546,10 @@ Each task gets its own git commit, so you can review them separately later.`,
 
         // Detect project tools and build a prompt focused on the current task
         const projectTools = await detectProjectTools(directory)
-        const taskPrompt = generateSingleTaskPrompt(
-          plan,
-          firstTask,
-          firstTaskNum,
-          true,
+        const taskPrompt = generateSingleTaskPrompt(plan, firstTask, firstTaskNum, true, {
+          compact: false, // Full format for first iteration
           projectTools,
-          1, // First iteration
-        )
+        })
         const completionPromise = plan.completionPromise || null
         const sessionId = (toolCtx as { sessionID?: string })?.sessionID || null
 
