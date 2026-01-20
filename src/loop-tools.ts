@@ -9,8 +9,9 @@ import { extractPromiseText } from "./utils"
 export function createLoopTools(directory: string) {
   return {
     "nm-loop": tool({
-      description: `Start iterative development loop. Repeats prompt on idle until completion promise or max iterations.
-Options: maxIterations (default 2, 0=unlimited), completionPromise (text to signal done via <promise> tags).`,
+      description: `Start iterative development loop. On session idle, the SAME prompt is fed back automatically.
+Continues until completion promise detected or max iterations. To complete: output <promise>YOUR_PHRASE</promise>.
+Options: maxIterations (default 2, 0=unlimited), completionPromise (phrase to signal done).`,
       args: {
         prompt: tool.schema.string().describe("The task prompt to execute repeatedly"),
         maxIterations: tool.schema

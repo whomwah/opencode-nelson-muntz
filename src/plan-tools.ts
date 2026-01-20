@@ -45,7 +45,9 @@ Actions: 'create' (prepare), 'view' (show), 'save' (write content)
 Plans stored in .opencode/plans/ as markdown with checkbox tasks.
 Filename: file param > slugified name > slugified description > "plan.md"
 
-Plan format: # Title, ## Overview, ## Tasks with - [ ] **Task**, optional completion_promise.`,
+Plan format: # Title, ## Overview, ## Tasks with - [ ] **Task**, optional completion_promise.
+
+Workflow: 1) action='create' to get path, 2) generate plan and show user, 3) action='save' with content to write file.`,
       args: {
         action: tool.schema
           .string()
@@ -409,7 +411,8 @@ commit your changes manually when ready.`
     }),
 
     "nm-start": tool({
-      description: `Start Nelson loop from a plan. Works through pending tasks, auto-commits each. Specify plan by name or file.`,
+      description: `Start Nelson loop from a plan. Works through pending tasks sequentially.
+After each task: auto-marks complete + creates git commit. Specify plan by name or file.`,
       args: {
         name: tool.schema
           .string()
