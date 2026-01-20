@@ -552,6 +552,7 @@ Each task gets its own git commit, so you can review them separately later.`,
           firstTaskNum,
           true,
           projectTools,
+          1, // First iteration
         )
         const completionPromise = plan.completionPromise || null
         const sessionId = (toolCtx as { sessionID?: string })?.sessionID || null

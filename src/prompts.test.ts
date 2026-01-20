@@ -21,56 +21,54 @@ describe("generateSingleTaskPrompt", () => {
     ...overrides,
   })
 
-  describe("basic prompt structure", () => {
+  describe("first iteration - full format", () => {
     test("includes plan title", () => {
       const plan = createPlan({ title: "My Awesome Plan" })
-      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false)
+      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, undefined, 1)
       expect(prompt).toContain("# My Awesome Plan")
     })
 
     test("uses fallback title when not provided", () => {
       const plan = createPlan({ title: "" })
-      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false)
+      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, undefined, 1)
       expect(prompt).toContain("# Project Plan")
     })
 
     test("includes project context from overview", () => {
       const plan = createPlan({ overview: "This is important context." })
-      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false)
-      expect(prompt).toContain("## Project Context")
+      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, undefined, 1)
+      expect(prompt).toContain("## Context")
       expect(prompt).toContain("This is important context.")
     })
 
     test("omits project context when overview is empty", () => {
       const plan = createPlan({ overview: "" })
-      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false)
-      expect(prompt).not.toContain("## Project Context")
+      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, undefined, 1)
+      expect(prompt).not.toContain("## Context")
     })
 
     test("includes current task number and title", () => {
       const task = createTask({ title: "Implement Feature X" })
       const plan = createPlan({ tasks: [task] })
-      const prompt = generateSingleTaskPrompt(plan, task, 1, false)
-      expect(prompt).toContain("## Current Task: #1")
+      const prompt = generateSingleTaskPrompt(plan, task, 1, false, undefined, 1)
+      expect(prompt).toContain("## Current: Task 1")
       expect(prompt).toContain("**Implement Feature X**")
     })
 
     test("includes task description", () => {
       const task = createTask({ description: "Detailed instructions here." })
       const plan = createPlan({ tasks: [task] })
-      const prompt = generateSingleTaskPrompt(plan, task, 1, false)
+      const prompt = generateSingleTaskPrompt(plan, task, 1, false, undefined, 1)
       expect(prompt).toContain("Detailed instructions here.")
     })
 
     test("shows fallback when task has no description", () => {
       const task = createTask({ description: "" })
       const plan = createPlan({ tasks: [task] })
-      const prompt = generateSingleTaskPrompt(plan, task, 1, false)
-      expect(prompt).toContain("No additional description provided.")
+      const prompt = generateSingleTaskPrompt(plan, task, 1, false, undefined, 1)
+      expect(prompt).toContain("No description.")
     })
-  })
 
-  describe("progress tracking", () => {
     test("shows progress count", () => {
       const tasks = [
         createTask({ id: "task-1", status: "completed" }),
@@ -78,120 +76,141 @@ describe("generateSingleTaskPrompt", () => {
         createTask({ id: "task-3", status: "pending" }),
       ]
       const plan = createPlan({ tasks })
-      const prompt = generateSingleTaskPrompt(plan, tasks[2], 3, false)
-      expect(prompt).toContain("## Progress: 2/3 tasks complete")
+      const prompt = generateSingleTaskPrompt(plan, tasks[2], 3, false, undefined, 1)
+      expect(prompt).toContain("## Progress: 2/3")
     })
 
-    test("shows all tasks with current one marked", () => {
+    test("shows all tasks with current one marked with arrow", () => {
       const tasks = [
         createTask({ id: "task-1", title: "First", status: "completed" }),
         createTask({ id: "task-2", title: "Second", status: "pending" }),
         createTask({ id: "task-3", title: "Third", status: "pending" }),
       ]
       const plan = createPlan({ tasks })
-      const prompt = generateSingleTaskPrompt(plan, tasks[1], 2, false)
+      const prompt = generateSingleTaskPrompt(plan, tasks[1], 2, false, undefined, 1)
 
-      expect(prompt).toContain("1. [x] First")
-      expect(prompt).toContain("2. [ ] Second ← CURRENT")
-      expect(prompt).toContain("3. [ ] Third")
+      expect(prompt).toContain("✓ 1. First")
+      expect(prompt).toContain("→ 2. Second")
+      expect(prompt).toContain("  3. Third")
+    })
+  })
+
+  describe("subsequent iterations - compact format", () => {
+    test("uses compact format on iteration > 1", () => {
+      const task = createTask({ title: "Second Task" })
+      const plan = createPlan({ tasks: [createTask(), task] })
+      const prompt = generateSingleTaskPrompt(plan, task, 2, true, undefined, 2)
+
+      // Should NOT contain full format elements
+      expect(prompt).not.toContain("# Test Plan")
+      expect(prompt).not.toContain("## Context")
+      expect(prompt).not.toContain("## Progress:")
+
+      // Should contain compact format
+      expect(prompt).toContain("## Task 2/2")
+      expect(prompt).toContain("**Second Task**")
+      expect(prompt).toContain("Complete this task, then the loop continues.")
     })
 
-    test("shows checkboxes correctly for completed and pending tasks", () => {
+    test("compact format shows completion count", () => {
       const tasks = [
         createTask({ id: "task-1", status: "completed" }),
         createTask({ id: "task-2", status: "pending" }),
       ]
       const plan = createPlan({ tasks })
-      const prompt = generateSingleTaskPrompt(plan, tasks[0], 1, false)
+      const prompt = generateSingleTaskPrompt(plan, tasks[1], 2, true, undefined, 3)
 
-      expect(prompt).toMatch(/\[x\].*← CURRENT/)
-      expect(prompt).toMatch(/\[ \]/)
+      expect(prompt).toContain("## Task 2/2 (1 done)")
+    })
+
+    test("compact format includes description", () => {
+      const task = createTask({ description: "Important details here." })
+      const plan = createPlan({ tasks: [task] })
+      const prompt = generateSingleTaskPrompt(plan, task, 1, true, undefined, 5)
+
+      expect(prompt).toContain("Important details here.")
+    })
+
+    test("compact format shows fallback for empty description", () => {
+      const task = createTask({ description: "" })
+      const plan = createPlan({ tasks: [task] })
+      const prompt = generateSingleTaskPrompt(plan, task, 1, true, undefined, 2)
+
+      expect(prompt).toContain("No description.")
     })
   })
 
   describe("project tools", () => {
-    test("shows justfile when available", () => {
+    test("shows compact tools line for justfile", () => {
       const plan = createPlan()
       const tools: ProjectTools = { hasJustfile: true, hasPackageJson: false, hasMakefile: false }
-      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, tools)
+      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, tools, 1)
 
-      expect(prompt).toContain("## Available Tools")
-      expect(prompt).toContain("`just` (justfile)")
-      expect(prompt).toContain("Run `just` to see all available tasks")
+      expect(prompt).toContain("**Tools**: just available")
     })
 
-    test("shows package.json when available", () => {
-      const plan = createPlan()
-      const tools: ProjectTools = { hasJustfile: false, hasPackageJson: true, hasMakefile: false }
-      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, tools)
-
-      expect(prompt).toContain("`npm`/`bun` (package.json)")
-      expect(prompt).toContain("Use `npm run <script>` or `bun run <script>`")
-    })
-
-    test("shows Makefile when available", () => {
-      const plan = createPlan()
-      const tools: ProjectTools = { hasJustfile: false, hasPackageJson: false, hasMakefile: true }
-      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, tools)
-
-      expect(prompt).toContain("`make` (Makefile)")
-      expect(prompt).toContain("Use `make <target>`")
-    })
-
-    test("shows multiple tools when available", () => {
+    test("shows compact tools line for multiple tools", () => {
       const plan = createPlan()
       const tools: ProjectTools = { hasJustfile: true, hasPackageJson: true, hasMakefile: true }
-      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, tools)
+      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, tools, 1)
 
-      expect(prompt).toContain("`just` (justfile)")
-      expect(prompt).toContain("`npm`/`bun` (package.json)")
-      expect(prompt).toContain("`make` (Makefile)")
+      expect(prompt).toContain("**Tools**: just, npm/bun, make available")
     })
 
     test("omits tools section when no tools available", () => {
       const plan = createPlan()
       const tools: ProjectTools = { hasJustfile: false, hasPackageJson: false, hasMakefile: false }
-      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, tools)
+      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, tools, 1)
 
-      expect(prompt).not.toContain("## Available Tools")
+      expect(prompt).not.toContain("**Tools**:")
     })
 
-    test("omits tools section when projectTools is undefined", () => {
+    test("omits tools in compact format (iteration > 1)", () => {
       const plan = createPlan()
-      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false)
+      const tools: ProjectTools = { hasJustfile: true, hasPackageJson: true, hasMakefile: false }
+      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, true, tools, 2)
 
-      expect(prompt).not.toContain("## Available Tools")
+      expect(prompt).not.toContain("**Tools**:")
     })
   })
 
   describe("loop mode vs single task mode", () => {
-    test("shows loop mode instructions when isLoopMode is true", () => {
+    test("shows compact loop mode instruction", () => {
       const plan = createPlan()
-      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, true)
+      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, true, undefined, 1)
 
-      expect(prompt).toContain("## Instructions")
-      expect(prompt).toContain("Verify your work is correct")
-      expect(prompt).toContain("The task will be automatically marked complete")
-      expect(prompt).toContain("A git commit will be created for this task")
-      expect(prompt).toContain("The loop will continue to the next task")
-      expect(prompt).toContain("Focus ONLY on this task - do not work ahead")
+      expect(prompt).toContain("Task auto-marks done + commits")
+      expect(prompt).toContain("Focus on this task only")
     })
 
-    test("shows single task mode instructions when isLoopMode is false", () => {
+    test("shows compact single task mode instruction", () => {
       const plan = createPlan()
+      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, undefined, 1)
+
+      expect(prompt).toContain("Task auto-marks done")
+      expect(prompt).toContain("Commit manually when ready")
+    })
+  })
+
+  describe("backward compatibility (no iteration param)", () => {
+    test("defaults to full format when iteration is undefined", () => {
+      const plan = createPlan({ title: "Test" })
       const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false)
 
-      expect(prompt).toContain("## Instructions")
-      expect(prompt).toContain("Verify your work is correct")
-      expect(prompt).toContain("The task will be automatically marked complete")
-      expect(prompt).toContain("Review your changes and commit manually")
-      expect(prompt).not.toContain("A git commit will be created")
-      expect(prompt).not.toContain("The loop will continue")
+      expect(prompt).toContain("# Test")
+      expect(prompt).toContain("## Progress:")
+    })
+
+    test("defaults to full format when iteration is 0", () => {
+      const plan = createPlan({ title: "Test" })
+      const prompt = generateSingleTaskPrompt(plan, plan.tasks[0], 1, false, undefined, 0)
+
+      expect(prompt).toContain("# Test")
     })
   })
 
   describe("complex scenarios", () => {
-    test("generates complete prompt with all features", () => {
+    test("generates complete prompt with all features on first iteration", () => {
       const tasks = [
         createTask({ id: "task-1", title: "Setup", status: "completed", lineNumber: 5 }),
         createTask({
@@ -211,59 +230,35 @@ describe("generateSingleTaskPrompt", () => {
       })
       const tools: ProjectTools = { hasJustfile: true, hasPackageJson: true, hasMakefile: false }
 
-      const prompt = generateSingleTaskPrompt(plan, tasks[1], 2, true, tools)
+      const prompt = generateSingleTaskPrompt(plan, tasks[1], 2, true, tools, 1)
 
       // Title
       expect(prompt).toContain("# API Development")
       // Overview
       expect(prompt).toContain("Building a REST API for user management")
-      // Tools
-      expect(prompt).toContain("## Available Tools")
+      // Tools (compact)
+      expect(prompt).toContain("**Tools**: just, npm/bun available")
       // Progress
-      expect(prompt).toContain("## Progress: 1/3 tasks complete")
-      // Task list
-      expect(prompt).toContain("1. [x] Setup")
-      expect(prompt).toContain("2. [ ] Implement Core ← CURRENT")
-      expect(prompt).toContain("3. [ ] Test")
+      expect(prompt).toContain("## Progress: 1/3")
+      // Task list with markers
+      expect(prompt).toContain("✓ 1. Setup")
+      expect(prompt).toContain("→ 2. Implement Core")
+      expect(prompt).toContain("  3. Test")
       // Current task
-      expect(prompt).toContain("## Current Task: #2")
+      expect(prompt).toContain("## Current: Task 2")
       expect(prompt).toContain("**Implement Core**")
       expect(prompt).toContain("Build the main functionality")
-      // Loop instructions
-      expect(prompt).toContain("A git commit will be created")
-    })
-
-    test("handles first task in list", () => {
-      const tasks = [
-        createTask({ id: "task-1", title: "First Task" }),
-        createTask({ id: "task-2", title: "Second Task" }),
-      ]
-      const plan = createPlan({ tasks })
-      const prompt = generateSingleTaskPrompt(plan, tasks[0], 1, false)
-
-      expect(prompt).toContain("## Current Task: #1")
-      expect(prompt).toContain("1. [ ] First Task ← CURRENT")
-    })
-
-    test("handles last task in list", () => {
-      const tasks = [
-        createTask({ id: "task-1", title: "First Task", status: "completed" }),
-        createTask({ id: "task-2", title: "Last Task" }),
-      ]
-      const plan = createPlan({ tasks })
-      const prompt = generateSingleTaskPrompt(plan, tasks[1], 2, false)
-
-      expect(prompt).toContain("## Current Task: #2")
-      expect(prompt).toContain("2. [ ] Last Task ← CURRENT")
+      // Compact loop instructions
+      expect(prompt).toContain("auto-marks done + commits")
     })
 
     test("handles single task plan", () => {
       const task = createTask({ title: "Only Task" })
       const plan = createPlan({ tasks: [task] })
-      const prompt = generateSingleTaskPrompt(plan, task, 1, false)
+      const prompt = generateSingleTaskPrompt(plan, task, 1, false, undefined, 1)
 
-      expect(prompt).toContain("## Progress: 0/1 tasks complete")
-      expect(prompt).toContain("1. [ ] Only Task ← CURRENT")
+      expect(prompt).toContain("## Progress: 0/1")
+      expect(prompt).toContain("→ 1. Only Task")
     })
   })
 })

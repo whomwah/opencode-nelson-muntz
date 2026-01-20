@@ -2,6 +2,7 @@ import type { ParsedPlan, PlanTask, ProjectTools } from "./types"
 
 /**
  * Generate a prompt for executing a single task from a plan
+ * On iteration > 1, uses a compact format to reduce token usage
  */
 export function generateSingleTaskPrompt(
   plan: ParsedPlan,
@@ -9,74 +10,56 @@ export function generateSingleTaskPrompt(
   taskNum: number,
   isLoopMode: boolean,
   projectTools?: ProjectTools,
+  iteration?: number,
 ): string {
+  const isFirstIteration = !iteration || iteration <= 1
+  const completedCount = plan.tasks.filter((t) => t.status === "completed").length
+
+  // Compact format for subsequent iterations
+  if (!isFirstIteration) {
+    let prompt = `## Task ${taskNum}/${plan.tasks.length} (${completedCount} done)\n\n`
+    prompt += `**${task.title}**\n\n`
+    prompt += task.description || "No description."
+    prompt += `\n\nComplete this task, then the loop continues.`
+    return prompt
+  }
+
+  // Full format for first iteration
   let prompt = `# ${plan.title || "Project Plan"}\n\n`
 
   if (plan.overview) {
-    prompt += `## Project Context\n${plan.overview}\n\n`
+    prompt += `## Context\n${plan.overview}\n\n`
   }
 
-  // Show available project tools with usage instructions
+  // Compact project tools (single line)
   if (projectTools) {
     const tools: string[] = []
-    if (projectTools.hasJustfile) tools.push("`just` (justfile)")
-    if (projectTools.hasPackageJson) tools.push("`npm`/`bun` (package.json)")
-    if (projectTools.hasMakefile) tools.push("`make` (Makefile)")
-
+    if (projectTools.hasJustfile) tools.push("just")
+    if (projectTools.hasPackageJson) tools.push("npm/bun")
+    if (projectTools.hasMakefile) tools.push("make")
     if (tools.length > 0) {
-      prompt += `## Available Tools\nThis project has: ${tools.join(", ")}\n\n`
-      prompt += `**IMPORTANT**: Use these project tools for build, test, and other operations:\n`
-      if (projectTools.hasJustfile) {
-        prompt += `- Run \`just\` to see all available tasks, then use \`just <task>\` for build/test/format\n`
-      }
-      if (projectTools.hasPackageJson) {
-        prompt += `- Use \`npm run <script>\` or \`bun run <script>\` for package.json scripts\n`
-      }
-      if (projectTools.hasMakefile) {
-        prompt += `- Use \`make <target>\` for Makefile targets\n`
-      }
-      prompt += `\n`
+      prompt += `**Tools**: ${tools.join(", ")} available. Run \`just\` or check package.json for commands.\n\n`
     }
   }
 
-  // Show progress overview
-  const completedCount = plan.tasks.filter((t) => t.status === "completed").length
-  prompt += `## Progress: ${completedCount}/${plan.tasks.length} tasks complete\n\n`
-
-  // List all tasks with current one highlighted
-  prompt += `### All Tasks\n`
+  // Progress and task list
+  prompt += `## Progress: ${completedCount}/${plan.tasks.length}\n\n`
   for (let i = 0; i < plan.tasks.length; i++) {
     const t = plan.tasks[i]
-    const checkbox = t.status === "completed" ? "[x]" : "[ ]"
-    const current = i === taskNum - 1 ? " ← CURRENT" : ""
-    prompt += `${i + 1}. ${checkbox} ${t.title}${current}\n`
+    const marker = t.status === "completed" ? "✓" : i === taskNum - 1 ? "→" : " "
+    prompt += `${marker} ${i + 1}. ${t.title}\n`
   }
 
-  prompt += `\n## Current Task: #${taskNum}\n\n`
+  prompt += `\n## Current: Task ${taskNum}\n\n`
   prompt += `**${task.title}**\n\n`
-  prompt += task.description || "No additional description provided."
+  prompt += task.description || "No description."
   prompt += `\n\n`
 
-  // Different instructions based on mode
+  // Compact instructions
   if (isLoopMode) {
-    prompt += `## Instructions
-
-Complete this task thoroughly. When you finish:
-1. Verify your work is correct
-2. The task will be automatically marked complete
-3. A git commit will be created for this task
-4. The loop will continue to the next task
-
-Focus ONLY on this task - do not work ahead.
-`
+    prompt += `Complete thoroughly. Task auto-marks done + commits. Focus on this task only.`
   } else {
-    prompt += `## Instructions
-
-Complete this task thoroughly. When you finish:
-1. Verify your work is correct
-2. The task will be automatically marked complete
-3. Review your changes and commit manually when ready
-`
+    prompt += `Complete thoroughly. Task auto-marks done. Commit manually when ready.`
   }
 
   return prompt
