@@ -1,7 +1,7 @@
 import { tool } from "@opencode-ai/plugin"
 import type { NelsonState, PlanTask } from "./types"
 import { readState, writeState } from "./state"
-import { slugify, detectProjectTools } from "./utils"
+import { slugify, detectProjectTools, formatProjectToolsCompact } from "./utils"
 import {
   DEFAULT_PLAN_DIR,
   DEFAULT_PLAN_FILE,
@@ -314,34 +314,13 @@ When they approve (or after any revisions), save it with:
 
         // Detect project tools for the prompt
         const projectTools = await detectProjectTools(directory)
-        const toolsInfo: string[] = []
-        const toolsUsage: string[] = []
-        if (projectTools.hasJustfile) {
-          toolsInfo.push("`just` (justfile)")
-          toolsUsage.push(
-            "- Run `just` to see all available tasks, then use `just <task>` for build/test/format",
-          )
-        }
-        if (projectTools.hasPackageJson) {
-          toolsInfo.push("`npm`/`bun` (package.json)")
-          toolsUsage.push("- Use `npm run <script>` or `bun run <script>` for package.json scripts")
-        }
-        if (projectTools.hasMakefile) {
-          toolsInfo.push("`make` (Makefile)")
-          toolsUsage.push("- Use `make <target>` for Makefile targets")
-        }
-        let toolsSection = ""
-        if (toolsInfo.length > 0) {
-          toolsSection = `\n## Available Tools\nThis project has: ${toolsInfo.join(", ")}\n\n`
-          toolsSection += `**IMPORTANT**: Use these project tools for build, test, and other operations:\n`
-          toolsSection += toolsUsage.join("\n") + "\n"
-        }
+        const toolsLine = formatProjectToolsCompact(projectTools)
 
         // Generate a focused prompt for this single task
         const taskPrompt = `# Single Task Execution
 
 **Plan:** ${plan.title || planFile}
-${toolsSection}
+${toolsLine ? `\n${toolsLine}\n` : ""}
 ## Current Task
 
 **${task.title}**

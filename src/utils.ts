@@ -47,3 +47,17 @@ export async function detectProjectTools(directory: string): Promise<ProjectTool
 
   return { hasJustfile, hasPackageJson, hasMakefile }
 }
+
+/**
+ * Format project tools as a compact single-line string
+ * Returns empty string if no tools detected
+ */
+export function formatProjectToolsCompact(tools: ProjectTools): string {
+  const names: string[] = []
+  if (tools.hasJustfile) names.push("just")
+  if (tools.hasPackageJson) names.push("npm/bun")
+  if (tools.hasMakefile) names.push("make")
+
+  if (names.length === 0) return ""
+  return `**Tools**: ${names.join(", ")} available.`
+}

@@ -1,4 +1,5 @@
 import type { ParsedPlan, PlanTask, ProjectTools } from "./types"
+import { formatProjectToolsCompact } from "./utils"
 
 /**
  * Options for generating task prompts
@@ -47,12 +48,9 @@ export function generateSingleTaskPrompt(
 
   // Compact project tools (single line)
   if (projectTools) {
-    const tools: string[] = []
-    if (projectTools.hasJustfile) tools.push("just")
-    if (projectTools.hasPackageJson) tools.push("npm/bun")
-    if (projectTools.hasMakefile) tools.push("make")
-    if (tools.length > 0) {
-      prompt += `**Tools**: ${tools.join(", ")} available. Run \`just\` or check package.json for commands.\n\n`
+    const toolsLine = formatProjectToolsCompact(projectTools)
+    if (toolsLine) {
+      prompt += `${toolsLine}\n\n`
     }
   }
 

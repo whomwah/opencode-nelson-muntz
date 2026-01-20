@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { extractPromiseText, slugify } from "./utils"
+import { extractPromiseText, slugify, formatProjectToolsCompact } from "./utils"
+import type { ProjectTools } from "./types"
 
 describe("extractPromiseText", () => {
   test("extracts text from promise tags", () => {
@@ -89,5 +90,32 @@ describe("slugify", () => {
 
   test("handles mixed special characters", () => {
     expect(slugify("My API's Test! (v2)")).toBe("my-apis-test-v2")
+  })
+})
+
+describe("formatProjectToolsCompact", () => {
+  test("returns empty string when no tools", () => {
+    const tools: ProjectTools = { hasJustfile: false, hasPackageJson: false, hasMakefile: false }
+    expect(formatProjectToolsCompact(tools)).toBe("")
+  })
+
+  test("formats single tool", () => {
+    const tools: ProjectTools = { hasJustfile: true, hasPackageJson: false, hasMakefile: false }
+    expect(formatProjectToolsCompact(tools)).toBe("**Tools**: just available.")
+  })
+
+  test("formats multiple tools", () => {
+    const tools: ProjectTools = { hasJustfile: true, hasPackageJson: true, hasMakefile: false }
+    expect(formatProjectToolsCompact(tools)).toBe("**Tools**: just, npm/bun available.")
+  })
+
+  test("formats all tools", () => {
+    const tools: ProjectTools = { hasJustfile: true, hasPackageJson: true, hasMakefile: true }
+    expect(formatProjectToolsCompact(tools)).toBe("**Tools**: just, npm/bun, make available.")
+  })
+
+  test("formats only makefile", () => {
+    const tools: ProjectTools = { hasJustfile: false, hasPackageJson: false, hasMakefile: true }
+    expect(formatProjectToolsCompact(tools)).toBe("**Tools**: make available.")
   })
 })
