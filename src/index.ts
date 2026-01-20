@@ -235,15 +235,12 @@ const NelsonMuntzPlugin: Plugin = async (ctx) => {
           compact: isCompact,
           projectTools,
         })
-        const completedCount = plan.tasks.filter((t) => t.status === "completed").length
-
-        const systemMsg = `🔄 Nelson iteration ${state.iteration} | Task ${nextTaskNum}/${plan.tasks.length} (${completedCount} complete)`
 
         await client.app.log({
           body: {
             service: "nelson-muntz",
             level: "info",
-            message: systemMsg,
+            message: `Nelson iter ${state.iteration} | Task ${nextTaskNum}/${plan.tasks.length}`,
           },
         })
 
@@ -254,7 +251,7 @@ const NelsonMuntzPlugin: Plugin = async (ctx) => {
               parts: [
                 {
                   type: "text",
-                  text: `${systemMsg}\n\n---\n\n${taskPrompt}`,
+                  text: taskPrompt,
                 },
               ],
             },
@@ -321,23 +318,20 @@ const NelsonMuntzPlugin: Plugin = async (ctx) => {
       state.iteration++
       await writeState(directory, state)
 
-      // Build system message
-      let systemMsg: string
-      if (state.completionPromise) {
-        systemMsg = `🔄 Nelson iteration ${state.iteration} | To stop: output <promise>${state.completionPromise}</promise> (ONLY when statement is TRUE - do not lie to exit!)`
-      } else {
-        systemMsg = `🔄 Nelson iteration ${state.iteration} | No completion promise set - loop runs infinitely`
-      }
+      // Compact system message for logging
+      const logMsg = state.completionPromise
+        ? `Nelson iter ${state.iteration} | Done: <promise>${state.completionPromise}</promise>`
+        : `Nelson iter ${state.iteration}`
 
       await client.app.log({
         body: {
           service: "nelson-muntz",
           level: "info",
-          message: systemMsg,
+          message: logMsg,
         },
       })
 
-      // Send the prompt back to continue the session
+      // Send just the prompt (no redundant status header)
       try {
         await client.session.prompt({
           path: { id: sessionId },
@@ -345,7 +339,7 @@ const NelsonMuntzPlugin: Plugin = async (ctx) => {
             parts: [
               {
                 type: "text",
-                text: `${systemMsg}\n\n---\n\n${state.prompt}`,
+                text: state.prompt,
               },
             ],
           },
