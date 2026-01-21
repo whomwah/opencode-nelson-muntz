@@ -1,5 +1,8 @@
 # Nelson Muntz Plugin for OpenCode
 
+[![CI](https://github.com/whomwah/opencode-nelson-muntz/actions/workflows/ci.yml/badge.svg)](https://github.com/whomwah/opencode-nelson-muntz/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@whomwah/opencode-nelson-muntz.svg)](https://www.npmjs.com/package/@whomwah/opencode-nelson-muntz)
+
 Plan-based iterative development loops for [OpenCode](https://opencode.ai). Create structured plans, execute tasks automatically, and commit progress as you go.
 
 > **Why "Nelson Muntz"?** This plugin is loosely based on the [Ralph Wiggum](https://ghuntley.com/ralph/) technique - a simple bash loop that repeatedly feeds an AI agent a prompt until completion. Nelson takes that core idea but adds structured planning, task tracking, and git integration. Since it's evolved beyond the original concept, it got its own Simpsons character. Ha-ha!
@@ -133,17 +136,18 @@ Once your plan is saved, switch to OpenCode's Build mode and use `nm-start` to e
 
 ### Available Tools
 
-When the plugin is installed you can ask opencode for all "nm-* tasks" and it will list them.
+When the plugin is installed you can ask opencode for all "nm-\* tasks" and it will list them.
 
 **Primary tools (plan-based workflow):**
 
-| Tool          | Description                                            |
-| ------------- | ------------------------------------------------------ |
-| `nm-plan`     | Create or view a PLAN.md file                          |
-| `nm-start`    | Start loop from PLAN.md (auto-commits per task)        |
-| `nm-tasks`    | List all tasks from the plan                           |
-| `nm-task`     | Execute a single task (auto-completes, no commit)      |
-| `nm-complete` | Manually mark a task complete (rarely needed now)      |
+| Tool          | Description                                       |
+| ------------- | ------------------------------------------------- |
+| `nm-plan`     | Create or view a PLAN.md file                     |
+| `nm-plans`    | List all available plan files                     |
+| `nm-start`    | Start loop from PLAN.md (auto-commits per task)   |
+| `nm-tasks`    | List all tasks from the plan                      |
+| `nm-task`     | Execute a single task (auto-completes, no commit) |
+| `nm-complete` | Manually mark a task complete (rarely needed now) |
 
 **Secondary tools (direct loop mode):**
 
@@ -158,10 +162,13 @@ When the plugin is installed you can ask opencode for all "nm-* tasks" and it wi
 
 #### nm-start
 
-| Parameter       | Type   | Required | Description                                       |
-| --------------- | ------ | -------- | ------------------------------------------------- |
-| `file`          | string | No       | Plan file path (default: .opencode/plans/PLAN.md) |
-| `maxIterations` | number | No       | Max iterations (default: 0 = unlimited)           |
+| Parameter       | Type   | Required | Description                                                                      |
+| --------------- | ------ | -------- | -------------------------------------------------------------------------------- |
+| `name`          | string | No       | Plan name (e.g., 'rest-api' or 'My API') - resolves to .opencode/plans/{slug}.md |
+| `file`          | string | No       | Explicit plan file path (default: .opencode/plans/PLAN.md)                       |
+| `maxIterations` | number | No       | Max iterations (default: 0 = unlimited)                                          |
+
+You can specify the plan by name or file path. If both are provided, `name` takes precedence.
 
 #### nm-plan
 
@@ -184,10 +191,26 @@ All plans are stored in `.opencode/plans/` by default.
 
 #### nm-task
 
-| Parameter | Type   | Required | Description                                       |
-| --------- | ------ | -------- | ------------------------------------------------- |
-| `task`    | string | Yes      | Task number (1, 2, 3...) or name                  |
-| `file`    | string | No       | Plan file path (default: .opencode/plans/PLAN.md) |
+| Parameter | Type   | Required | Description                                                                      |
+| --------- | ------ | -------- | -------------------------------------------------------------------------------- |
+| `task`    | string | Yes      | Task number (1, 2, 3...) or name                                                 |
+| `name`    | string | No       | Plan name (e.g., 'rest-api' or 'My API') - resolves to .opencode/plans/{slug}.md |
+| `file`    | string | No       | Explicit plan file path (default: .opencode/plans/PLAN.md)                       |
+
+#### nm-tasks
+
+| Parameter | Type   | Required | Description                                                                      |
+| --------- | ------ | -------- | -------------------------------------------------------------------------------- |
+| `name`    | string | No       | Plan name (e.g., 'rest-api' or 'My API') - resolves to .opencode/plans/{slug}.md |
+| `file`    | string | No       | Explicit plan file path (default: .opencode/plans/PLAN.md)                       |
+
+#### nm-complete
+
+| Parameter | Type   | Required | Description                                                                      |
+| --------- | ------ | -------- | -------------------------------------------------------------------------------- |
+| `task`    | string | Yes      | Task number (1, 2, 3...) or name                                                 |
+| `name`    | string | No       | Plan name (e.g., 'rest-api' or 'My API') - resolves to .opencode/plans/{slug}.md |
+| `file`    | string | No       | Explicit plan file path (default: .opencode/plans/PLAN.md)                       |
 
 #### nm-loop
 

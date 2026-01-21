@@ -1,6 +1,40 @@
 import { readPlanFile, writePlanFile, parsePlanFile, updateTaskStatus } from "./plan"
 
 /**
+ * Format a commit message from a task title and number.
+ *
+ * Task titles may be in formats like:
+ *   "**Create file** - description"  (with ** markers)
+ *   "Create file** - description"    (trailing ** from parser)
+ *   "Create file - description"      (plain text)
+ *
+ * We extract the heading (before " - ") as subject, rest as body.
+ */
+export function formatCommitMessage(
+  taskTitle: string,
+  taskNum: number,
+): { subject: string; body: string | null } {
+  // Clean up any ** markers from the title
+  const cleanTitle = taskTitle.replace(/\*\*/g, "").trim()
+
+  // Split on " - " to separate heading from description
+  const separatorIdx = cleanTitle.indexOf(" - ")
+  if (separatorIdx !== -1) {
+    const heading = cleanTitle.slice(0, separatorIdx).trim()
+    const description = cleanTitle.slice(separatorIdx + 3).trim()
+    return {
+      subject: `feat(nelson): task ${taskNum} - ${heading}`,
+      body: description || null,
+    }
+  }
+
+  return {
+    subject: `feat(nelson): task ${taskNum} - ${cleanTitle}`,
+    body: null,
+  }
+}
+
+/**
  * Create a git commit for a completed task
  */
 export async function createGitCommit(
@@ -44,42 +78,18 @@ export async function createGitCommit(
     return { success: false, message: `Failed to stage changes: ${addResult.stderr}` }
   }
 
-  // Create commit with task info
-  // Git commit format: subject line (short), blank line, body (details)
-  // Task titles may be in formats like:
-  //   "**Create file** - description"  (with ** markers)
-  //   "Create file** - description"    (trailing ** from parser)
-  //   "Create file - description"      (plain text)
-  // We want to extract the heading (before " - ") as subject, rest as body
-  let commitSubject: string
-  let commitBody: string | null = null
-
-  // First, clean up any ** markers from the title
-  const cleanTitle = taskTitle.replace(/\*\*/g, "").trim()
-
-  // Split on " - " to separate heading from description
-  const separatorIdx = cleanTitle.indexOf(" - ")
-  if (separatorIdx !== -1) {
-    const heading = cleanTitle.slice(0, separatorIdx).trim()
-    const description = cleanTitle.slice(separatorIdx + 3).trim()
-    commitSubject = `feat(nelson): task ${taskNum} - ${heading}`
-    if (description) {
-      commitBody = description
-    }
-  } else {
-    commitSubject = `feat(nelson): task ${taskNum} - ${cleanTitle}`
-  }
-
-  const commitArgs = ["commit", "-m", commitSubject]
-  if (commitBody) {
-    commitArgs.push("-m", commitBody)
+  // Create commit
+  const { subject, body } = formatCommitMessage(taskTitle, taskNum)
+  const commitArgs = ["commit", "-m", subject]
+  if (body) {
+    commitArgs.push("-m", body)
   }
   const commitResult = await runCommand("git", commitArgs)
   if (commitResult.code !== 0) {
     return { success: false, message: `Failed to commit: ${commitResult.stderr}` }
   }
 
-  return { success: true, message: `Created commit: ${commitSubject}` }
+  return { success: true, message: `Created commit: ${subject}` }
 }
 
 /**

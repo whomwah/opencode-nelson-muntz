@@ -1,9 +1,62 @@
 import * as path from "node:path"
-import { mkdir } from "node:fs/promises"
+import { mkdir, readdir } from "node:fs/promises"
 import type { PlanTask, ParsedPlan } from "./types"
+import { slugify } from "./utils"
 
 export const DEFAULT_PLAN_DIR = ".opencode/plans"
 export const DEFAULT_PLAN_FILE = `${DEFAULT_PLAN_DIR}/PLAN.md`
+
+/**
+ * Resolve a plan file path from either an explicit path or a plan name.
+ *
+ * @param input - Either a file path (contains `/` or ends with `.md`) or a plan name
+ * @returns The resolved file path (relative to project root)
+ *
+ * @example
+ * resolvePlanFile("rest-api")           // ".opencode/plans/rest-api.md"
+ * resolvePlanFile("My New Plan")        // ".opencode/plans/my-new-plan.md"
+ * resolvePlanFile("custom/plan.md")     // "custom/plan.md"
+ * resolvePlanFile(".opencode/plans/x.md") // ".opencode/plans/x.md"
+ */
+export function resolvePlanFile(input: string): string {
+  // If input looks like a path (contains / or ends with .md), use as-is
+  if (input.includes("/") || input.endsWith(".md")) {
+    return input
+  }
+
+  // Otherwise, treat as a name and convert to path
+  const slug = slugify(input)
+  return `${DEFAULT_PLAN_DIR}/${slug}.md`
+}
+
+/**
+ * List all plan files in the default plans directory.
+ *
+ * @param directory - The project root directory
+ * @returns Array of plan file info (name without extension and relative path)
+ *
+ * @example
+ * const plans = await listPlanFiles("/path/to/project")
+ * // [{ name: "rest-api", path: ".opencode/plans/rest-api.md" }, ...]
+ */
+export async function listPlanFiles(
+  directory: string,
+): Promise<Array<{ name: string; path: string }>> {
+  const plansDir = path.join(directory, DEFAULT_PLAN_DIR)
+  try {
+    const entries = await readdir(plansDir, { withFileTypes: true })
+    return entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+      .map((entry) => ({
+        name: entry.name.replace(/\.md$/, ""),
+        path: `${DEFAULT_PLAN_DIR}/${entry.name}`,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  } catch {
+    // Directory doesn't exist or can't be read
+    return []
+  }
+}
 
 /**
  * Read a plan file from disk

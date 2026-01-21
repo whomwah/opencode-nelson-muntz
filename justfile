@@ -15,47 +15,59 @@ build:
 
 # Generate TypeScript declarations
 build-types:
-    tsc --emitDeclarationOnly
+    bunx tsc --emitDeclarationOnly
 
 # Build everything (code + types)
 build-all: build build-types
 
 # Run TypeScript type checking
 typecheck:
-    tsc --noEmit
+    bunx tsc --noEmit
+
+# Run tests
+test:
+    bun test
 
 # Format all files with Prettier
 format:
-    bun run format
+    bunx prettier --write .
 
 # Check formatting without modifying files
 format-check:
-    bun run format:check
+    bunx prettier --check .
 
 # Watch mode - rebuilds on changes
 dev:
-    bun run build --watch
+    bun build src/index.ts --outdir dist --target bun --watch
 
 # Symlink plugin to global OpenCode plugins (~/.config/opencode/plugin/)
 link-local:
     mkdir -p ~/.config/opencode/plugin
-    ln -sf $(pwd)/src/index.ts ~/.config/opencode/plugin/nelson-muntz.ts
+    ln -sf $(pwd)/dist/index.js ~/.config/opencode/plugin/nelson-muntz.js
 
 # Symlink plugin to project OpenCode plugins (.opencode/plugin/)
 link-project:
     mkdir -p .opencode/plugin
-    ln -sf $(pwd)/src/index.ts .opencode/plugin/nelson-muntz.ts
+    ln -sf $(pwd)/dist/index.js .opencode/plugin/nelson-muntz.js
 
 # Remove global plugin symlink
 unlink-local:
-    rm -f ~/.config/opencode/plugin/nelson-muntz.ts
+    rm -f ~/.config/opencode/plugin/nelson-muntz.js
 
 # Remove project plugin symlink
 unlink-project:
-    rm -f .opencode/plugin/nelson-muntz.ts
+    rm -f .opencode/plugin/nelson-muntz.js
 
 # Prepare for publishing (build + types)
 prepublish: build build-types
+
+# Login to npm registry
+npm-login:
+    npm adduser
+
+# Publish package to npm (public access)
+npm-publish: prepublish
+    npm publish --access public
 
 # Clean build artifacts
 clean:
