@@ -15,8 +15,7 @@
     "access": "public"
   },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "prepublishOnly": "bun build src/index.ts --outdir dist --target bun && bunx tsc --emitDeclarationOnly"
