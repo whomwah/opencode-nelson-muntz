@@ -16,6 +16,8 @@ Nelson is a development plugin that combines structured planning with automated 
 
 The plugin listens for OpenCode's `session.idle` event to continue work automatically, creating a self-referential feedback loop where the AI iteratively builds on its own work.
 
+![Nelson Muntz OpenCode Plugin](./assets/nelson.png)
+
 ### Core Workflow
 
 **Plan-based mode** - for structured projects:
