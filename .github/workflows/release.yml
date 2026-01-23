@@ -39,4 +39,5 @@ jobs:
         run: bunx semantic-release
         env:
           NPM_CONFIG_PROVENANCE: true
+          NODE_AUTH_TOKEN: ""
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
