@@ -5,7 +5,7 @@
 
 Plan-based iterative development loops for [OpenCode](https://opencode.ai). Create structured plans, execute tasks automatically, and commit progress as you go.
 
-> **Why "Nelson Muntz"?** This plugin is loosely based on the [Ralph Wiggum](https://ghuntley.com/ralph/) technique - a simple bash loop that repeatedly feeds an AI agent a prompt until completion. Nelson takes that core idea but adds structured planning, task tracking, and git integration. Since it's evolved beyond the original concept, it got its own Simpsons character. Ha-ha!
+> **Why "Nelson Muntz"?** This plugin is inspired by the [Ralph Wiggum](https://ghuntley.com/ralph/) technique - a bash loop that repeatedly feeds an AI agent a prompt until completion. Nelson takes that core idea but diverges significantly: it runs as an OpenCode plugin (not a bash script), adds structured planning, task tracking, and git integration. Unlike Ralph Wiggum, Nelson doesn't clear context between iterations - the AI retains conversation history and builds on previous work within the same session. Since it's evolved into its own thing, it got its own Simpsons character. Ha-ha!
 
 ## What is Nelson?
 
@@ -105,9 +105,12 @@ Use OpenCode's Plan mode with `nm-plan` to create and refine your plan _before_ 
    You: "Add a task for authentication"
    You: "Split the database task into schema design and migrations"
    You: "Remove the Docker task, I'll handle that manually"
+   You: "Reorder so database setup comes before the API endpoints"
    ```
 
    The AI updates the plan and shows you each revision.
+
+   > **Task ordering matters!** Tasks are executed top-to-bottom, so ensure foundational work (setup, data models, infrastructure) comes before features that depend on it. Get the order right during planning - it's easier than reordering later.
 
 3. **Confirm and save** - When you're satisfied, confirm it:
 
@@ -306,7 +309,7 @@ Your plan files in `.opencode/plans/` can be committed if you want to share them
 
 3. **Completion Detection**: The plugin checks the AI's output for `<promise>YOUR_TEXT</promise>` tags matching your completion promise
 
-4. **Iterative Improvement**: The AI sees files modified by previous attempts, allowing it to build on its own work
+4. **Iterative Improvement**: The AI retains full conversation history and sees files modified by previous attempts, allowing it to build on its own work
 
 5. **Stops When**: The completion promise is detected OR maxIterations is reached
 

@@ -69,7 +69,15 @@ The plan should be markdown with:
 - # Title
 - ## Overview section with project context
 - ## Tasks section with checkbox items: - [ ] **Task title**
-- Optional: completion_promise: SOME_PHRASE (for auto-completion detection)`,
+- Optional: completion_promise: SOME_PHRASE (for auto-completion detection)
+
+TASK ORDERING:
+Order tasks by logical execution sequence. Tasks are executed top-to-bottom,
+so place foundational/prerequisite work first. For example:
+1. Setup and configuration tasks
+2. Core infrastructure or data models
+3. Features that depend on the above
+4. Tests, documentation, and polish`,
       args: {
         action: tool.schema
           .string()
