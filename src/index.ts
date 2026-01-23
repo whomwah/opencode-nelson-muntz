@@ -2,48 +2,14 @@ import { type Plugin } from "@opencode-ai/plugin"
 
 // Import from modules
 import { readState, writeState, removeState } from "./state"
-import { extractPromiseText, detectProjectTools } from "./utils"
+import { detectProjectTools } from "./utils"
 import { readPlanFile, parsePlanFile } from "./plan"
 import { markTaskCompleteAndCommit } from "./git"
 import { generateSingleTaskPrompt } from "./prompts"
-import { createLoopTools } from "./loop-tools"
 import { createPlanTools } from "./plan-tools"
 
 const NelsonMuntzPlugin: Plugin = async (ctx) => {
   const { directory, client } = ctx
-
-  // Helper to check if completion promise is in any message parts
-  async function checkCompletionInSession(
-    sessionId: string,
-    completionPromise: string,
-  ): Promise<boolean> {
-    try {
-      const messagesResult = await client.session.messages({
-        path: { id: sessionId },
-      })
-
-      if (!messagesResult.data) return false
-
-      // Check the last few assistant messages for completion promise
-      const messages = messagesResult.data
-      for (let i = messages.length - 1; i >= Math.max(0, messages.length - 5); i--) {
-        const msg = messages[i]
-        if (msg.info.role !== "assistant") continue
-
-        for (const part of msg.parts) {
-          if (part.type === "text" && typeof part.text === "string") {
-            const promiseText = extractPromiseText(part.text)
-            if (promiseText === completionPromise) {
-              return true
-            }
-          }
-        }
-      }
-    } catch {
-      // Failed to get messages, continue loop
-    }
-    return false
-  }
 
   return {
     // Listen for session idle to continue the Nelson loop
@@ -180,28 +146,6 @@ const NelsonMuntzPlugin: Plugin = async (ctx) => {
           return
         }
 
-        // Check if completion promise was detected
-        if (state.completionPromise) {
-          const completed = await checkCompletionInSession(sessionId, state.completionPromise)
-          if (completed) {
-            await client.app.log({
-              body: {
-                service: "nelson-muntz",
-                level: "info",
-                message: `Nelson loop: Detected <promise>${state.completionPromise}</promise> - loop complete!`,
-              },
-            })
-            await client.tui.showToast({
-              body: {
-                message: `Nelson loop completed after ${state.iteration} iterations!`,
-                variant: "success",
-              },
-            })
-            await removeState(directory)
-            return
-          }
-        }
-
         // Check max iterations
         if (state.maxIterations > 0 && state.iteration >= state.maxIterations) {
           await client.app.log({
@@ -264,102 +208,11 @@ const NelsonMuntzPlugin: Plugin = async (ctx) => {
             },
           })
         }
-        return
-      }
-
-      // Legacy mode (for nm-loop tool without plan file)
-      // Check if completion promise was detected in the last message
-      if (state.completionPromise) {
-        const completed = await checkCompletionInSession(sessionId, state.completionPromise)
-        if (completed) {
-          await client.app.log({
-            body: {
-              service: "nelson-muntz",
-              level: "info",
-              message: `Nelson loop: Detected <promise>${state.completionPromise}</promise> - loop complete!`,
-            },
-          })
-
-          await client.tui.showToast({
-            body: {
-              message: `Nelson loop completed after ${state.iteration} iterations!`,
-              variant: "success",
-            },
-          })
-
-          await removeState(directory)
-          return
-        }
-      }
-
-      // Check if max iterations reached
-      if (state.maxIterations > 0 && state.iteration >= state.maxIterations) {
-        await client.app.log({
-          body: {
-            service: "nelson-muntz",
-            level: "info",
-            message: `Nelson loop: Max iterations (${state.maxIterations}) reached.`,
-          },
-        })
-
-        await client.tui.showToast({
-          body: {
-            message: `Nelson loop: Max iterations (${state.maxIterations}) reached.`,
-            variant: "warning",
-          },
-        })
-
-        await removeState(directory)
-        return
-      }
-
-      // Increment iteration and continue the loop
-      state.iteration++
-      await writeState(directory, state)
-
-      // Build system message
-      let systemMsg: string
-      if (state.completionPromise) {
-        systemMsg = `🔄 Nelson iteration ${state.iteration} | To stop: output <promise>${state.completionPromise}</promise> (ONLY when statement is TRUE - do not lie to exit!)`
-      } else {
-        systemMsg = `🔄 Nelson iteration ${state.iteration} | No completion promise set - loop runs infinitely`
-      }
-
-      await client.app.log({
-        body: {
-          service: "nelson-muntz",
-          level: "info",
-          message: systemMsg,
-        },
-      })
-
-      // Send the prompt back to continue the session
-      try {
-        await client.session.prompt({
-          path: { id: sessionId },
-          body: {
-            parts: [
-              {
-                type: "text",
-                text: `${systemMsg}\n\n---\n\n${state.prompt}`,
-              },
-            ],
-          },
-        })
-      } catch (error) {
-        await client.app.log({
-          body: {
-            service: "nelson-muntz",
-            level: "error",
-            message: `Nelson loop: Failed to send prompt - ${error}`,
-          },
-        })
       }
     },
 
-    // Custom tools for Nelson loop management
+    // Custom tools for Nelson plan management
     tool: {
-      ...createLoopTools(directory),
       ...createPlanTools(directory),
     },
   }

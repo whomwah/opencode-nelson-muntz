@@ -342,7 +342,7 @@ No git commit is created - you can review the changes and commit manually.`,
         // Check for existing loop
         const existingState = await readState(directory)
         if (existingState?.active) {
-          return `A Nelson loop is already active (iteration ${existingState.iteration}). Use nm-cancel to stop it first.`
+          return `A Nelson loop is already active (iteration ${existingState.iteration}). Cancel it first by stopping the current session.`
         }
 
         // Get session ID from tool context
@@ -354,7 +354,6 @@ No git commit is created - you can review the changes and commit manually.`,
           iteration: 1,
           maxIterations: 1, // Single iteration only
           completionPromise: null,
-          prompt: "", // Not used in single-task mode
           sessionId,
           startedAt: new Date().toISOString(),
           planFile,
@@ -544,7 +543,7 @@ Each task gets its own git commit, so you can review them separately later.`,
         // Check for existing loop
         const existingState = await readState(directory)
         if (existingState?.active) {
-          return `A Nelson loop is already active (iteration ${existingState.iteration}). Use nm-cancel to stop it first.`
+          return `A Nelson loop is already active (iteration ${existingState.iteration}). Cancel it first by stopping the current session.`
         }
 
         // Find the first pending task
@@ -570,7 +569,6 @@ Each task gets its own git commit, so you can review them separately later.`,
           iteration: 1,
           maxIterations,
           completionPromise,
-          prompt: "", // Will be regenerated each iteration
           sessionId,
           startedAt: new Date().toISOString(),
           planFile,
