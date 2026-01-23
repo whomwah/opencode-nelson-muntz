@@ -40,8 +40,11 @@
   "homepage": "https://github.com/whomwah/opencode-nelson-muntz#readme",
   "devDependencies": {
     "@opencode-ai/plugin": "latest",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@types/bun": "latest",
     "prettier": "^3.7.4",
+    "semantic-release": "^24.2.3",
     "typescript": "^5.0.0"
   },
   "peerDependencies": {
