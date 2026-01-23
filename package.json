@@ -1,6 +1,6 @@
 {
   "name": "@whomwah/opencode-nelson-muntz",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Nelson Muntz iterative development loop plugin for OpenCode",
   "type": "module",
   "main": "dist/index.js",
@@ -12,7 +12,8 @@
     }
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "files": [
     "dist"
@@ -44,7 +45,7 @@
     "@semantic-release/git": "^10.0.1",
     "@types/bun": "latest",
     "prettier": "^3.7.4",
-    "semantic-release": "^24.2.3",
+    "semantic-release": "^25.0.2",
     "typescript": "^5.0.0"
   },
   "peerDependencies": {

@@ -26,9 +26,11 @@ just link-project       # Symlink to .opencode/plugin/
 
 ### Testing
 
-No test suite exists. When adding tests:
+```bash
+just test               # Run all tests with Bun
+```
 
-- Use Bun's built-in test runner: `bun test`
+- Uses Bun's built-in test runner
 - Run single test file: `bun test path/to/file.test.ts`
 - Run tests matching pattern: `bun test --filter "pattern"`
 
@@ -55,6 +57,7 @@ Run `just` with no arguments to see all available tasks:
 | `just build-all`      | Build everything (code + types)        |
 | `just dev`            | Watch mode for development             |
 | `just typecheck`      | Run TypeScript type checking           |
+| `just test`           | Run tests with Bun                     |
 | `just format`         | Format code with Prettier              |
 | `just format-check`   | Check formatting without modifying     |
 | `just link-local`     | Symlink to global OpenCode plugins     |
@@ -64,6 +67,8 @@ Run `just` with no arguments to see all available tasks:
 | `just clean`          | Clean build artifacts                  |
 | `just rebuild`        | Full rebuild from clean state          |
 | `just prepublish`     | Prepare for publishing (build + types) |
+| `just npm-login`      | Login to npm registry                  |
+| `just npm-publish`    | Publish package to npm (public access) |
 
 ## Project Structure
 
