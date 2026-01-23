@@ -2,7 +2,7 @@ import * as path from "node:path"
 import { mkdir, unlink } from "node:fs/promises"
 import type { NelsonState } from "./types"
 
-export const NELSON_STATE_FILE = ".opencode/nelson-loop.local.json"
+export const NELSON_STATE_FILE = ".opencode/nelson-state.local.json"
 
 /**
  * Read the Nelson loop state from disk

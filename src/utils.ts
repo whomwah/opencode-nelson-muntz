@@ -2,17 +2,6 @@ import * as path from "node:path"
 import type { ProjectTools } from "./types"
 
 /**
- * Extract text from <promise>...</promise> tags
- */
-export function extractPromiseText(text: string): string | null {
-  const match = text.match(/<promise>([\s\S]*?)<\/promise>/)
-  if (match) {
-    return match[1].trim().replace(/\s+/g, " ")
-  }
-  return null
-}
-
-/**
  * Convert text to a URL-friendly slug
  */
 export function slugify(text: string): string {

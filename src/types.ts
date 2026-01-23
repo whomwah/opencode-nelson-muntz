@@ -1,12 +1,11 @@
 /**
- * State for the Nelson Muntz loop, persisted to .opencode/nelson-loop.local.json
+ * State for the Nelson Muntz loop, persisted to .opencode/nelson-state.local.json
  */
 export interface NelsonState {
   active: boolean
   iteration: number
   maxIterations: number
   completionPromise: string | null
-  prompt: string
   sessionId: string | null
   startedAt: string
   planFile?: string | null
