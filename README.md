@@ -5,20 +5,17 @@
 
 Plan-based iterative development loops for [OpenCode](https://opencode.ai). Create structured plans, execute tasks automatically, and commit progress as you go.
 
-> **Why "Nelson Muntz"?** This plugin is loosely based on the [Ralph Wiggum](https://ghuntley.com/ralph/) technique - a simple bash loop that repeatedly feeds an AI agent a prompt until completion. Nelson takes that core idea but adds structured planning, task tracking, and git integration. Since it's evolved beyond the original concept, it got its own Simpsons character. Ha-ha!
+> **Why "Nelson Muntz"?** Named after the Simpsons character. Inspired by the [Ralph Wiggum](https://ghuntley.com/ralph/) technique. Ha-ha!
 
 ## What is Nelson?
 
-Nelson is a development plugin that combines structured planning with automated execution. It works in two modes:
+Nelson is a development plugin that combines structured planning with automated execution. Create a plan with tasks, then let Nelson work through them one by one, committing progress after each task.
 
-1. **Plan-based mode** (primary): Create a plan with tasks, then let Nelson work through them one by one, committing progress after each task
-2. **Direct loop mode** (secondary): Hammer at a single goal until a completion condition is met
+The plugin listens for OpenCode's `session.idle` event to continue work automatically, creating a feedback loop where the AI iteratively builds on its own work.
 
-The plugin listens for OpenCode's `session.idle` event to continue work automatically, creating a self-referential feedback loop where the AI iteratively builds on its own work.
+![Nelson Muntz OpenCode Plugin](./assets/nelson.png)
 
 ### Core Workflow
-
-**Plan-based mode** - for structured projects:
 
 ```
 # Create a plan through conversation:
@@ -29,16 +26,6 @@ nm-start
 
 # Loop works through tasks one by one
 # Stops when: all tasks marked [x] OR maxIterations reached
-```
-
-**Direct loop mode** - for iterative problem-solving:
-
-```
-# Start a loop that keeps trying until success:
-nm-loop("Make all tests pass", completionPromise: "ALL_TESTS_PASSING", maxIterations: 20)
-
-# Same prompt fed back each iteration
-# Stops when: <promise>ALL_TESTS_PASSING</promise> output OR maxIterations reached
 ```
 
 ## Installation
@@ -103,9 +90,12 @@ Use OpenCode's Plan mode with `nm-plan` to create and refine your plan _before_ 
    You: "Add a task for authentication"
    You: "Split the database task into schema design and migrations"
    You: "Remove the Docker task, I'll handle that manually"
+   You: "Reorder so database setup comes before the API endpoints"
    ```
 
    The AI updates the plan and shows you each revision.
+
+   > **Task ordering matters!** Tasks are executed top-to-bottom, so ensure foundational work (setup, data models, infrastructure) comes before features that depend on it. Get the order right during planning - it's easier than reordering later.
 
 3. **Confirm and save** - When you're satisfied, confirm it:
 
@@ -138,8 +128,6 @@ Once your plan is saved, switch to OpenCode's Build mode and use `nm-start` to e
 
 When the plugin is installed you can ask opencode for all "nm-\* tasks" and it will list them.
 
-**Primary tools (plan-based workflow):**
-
 | Tool          | Description                                       |
 | ------------- | ------------------------------------------------- |
 | `nm-plan`     | Create or view a PLAN.md file                     |
@@ -147,16 +135,7 @@ When the plugin is installed you can ask opencode for all "nm-\* tasks" and it w
 | `nm-start`    | Start loop from PLAN.md (auto-commits per task)   |
 | `nm-tasks`    | List all tasks from the plan                      |
 | `nm-task`     | Execute a single task (auto-completes, no commit) |
-| `nm-complete` | Manually mark a task complete (rarely needed now) |
-
-**Secondary tools (direct loop mode):**
-
-| Tool                  | Description                                            |
-| --------------------- | ------------------------------------------------------ |
-| `nm-loop`             | Start loop with direct prompt (advanced, no plan file) |
-| `nm-cancel`           | Cancel the active Nelson loop                          |
-| `nm-status`           | Check the status of the current loop                   |
-| `nm-check-completion` | Manually check if text contains the completion promise |
+| `nm-complete` | Manually mark a task complete (rarely needed)     |
 
 ### Tool Parameters
 
@@ -166,7 +145,7 @@ When the plugin is installed you can ask opencode for all "nm-\* tasks" and it w
 | --------------- | ------ | -------- | -------------------------------------------------------------------------------- |
 | `name`          | string | No       | Plan name (e.g., 'rest-api' or 'My API') - resolves to .opencode/plans/{slug}.md |
 | `file`          | string | No       | Explicit plan file path (default: .opencode/plans/PLAN.md)                       |
-| `maxIterations` | number | No       | Max iterations (default: 0 = unlimited)                                          |
+| `maxIterations` | number | No       | Safety limit on iterations (default: 0 = unlimited). Rarely needed.              |
 
 You can specify the plan by name or file path. If both are provided, `name` takes precedence.
 
@@ -212,16 +191,6 @@ All plans are stored in `.opencode/plans/` by default.
 | `name`    | string | No       | Plan name (e.g., 'rest-api' or 'My API') - resolves to .opencode/plans/{slug}.md |
 | `file`    | string | No       | Explicit plan file path (default: .opencode/plans/PLAN.md)                       |
 
-#### nm-loop
-
-Direct loop mode - keeps feeding the same prompt until completion or max iterations. Ideal for iterative problem-solving like "make tests pass" or "fix the build".
-
-| Parameter           | Type   | Required | Description                                                     |
-| ------------------- | ------ | -------- | --------------------------------------------------------------- |
-| `prompt`            | string | Yes      | The task prompt to execute repeatedly                           |
-| `maxIterations`     | number | No       | Maximum iterations before stopping (default: 2, 0 = unlimited)  |
-| `completionPromise` | string | No       | Phrase that signals completion when wrapped in `<promise>` tags |
-
 ## Development
 
 ### Prerequisites
@@ -259,15 +228,15 @@ Nelson creates files in your project's `.opencode/` directory:
 ├── plans/                      # Your plan files (persistent)
 │   ├── my-api.md
 │   └── another-project.md
-└── nelson-loop.local.json      # Loop state (temporary)
+└── nelson-state.local.json     # Loop state (temporary)
 ```
 
 ### File Details
 
-| File/Folder                        | Purpose                                                              | Lifecycle                                                                             |
-| ---------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `.opencode/plans/`                 | Stores PLAN.md files with your tasks                                 | Persistent - you create and manage these                                              |
-| `.opencode/nelson-loop.local.json` | Tracks active loop state (iteration count, current task, session ID) | **Temporary** - created when loop starts, deleted when loop completes or is cancelled |
+| File/Folder                         | Purpose                                                              | Lifecycle                                                                             |
+| ----------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `.opencode/plans/`                  | Stores PLAN.md files with your tasks                                 | Persistent - you create and manage these                                              |
+| `.opencode/nelson-state.local.json` | Tracks active loop state (iteration count, current task, session ID) | **Temporary** - created when loop starts, deleted when loop completes or is cancelled |
 
 ### Git Recommendations
 
@@ -275,53 +244,30 @@ Add to your `.gitignore`:
 
 ```gitignore
 # Nelson Muntz plugin state (temporary, local only)
-.opencode/nelson-loop.local.json
+.opencode/nelson-state.local.json
 ```
 
 Your plan files in `.opencode/plans/` can be committed if you want to share them with your team, or gitignored if they're personal.
 
 ## How It Works
 
-### Plan-Based Mode (nm-start, nm-task)
-
-1. **Loop Activation**: When you call `nm-start`, the plugin reads PLAN.md and creates a state file at `.opencode/nelson-loop.local.json`
+1. **Loop Activation**: When you call `nm-start`, the plugin reads PLAN.md and creates a state file at `.opencode/nelson-state.local.json`
 
 2. **Task Execution**: The plugin generates a prompt for the first pending task and sends it to the AI
 
 3. **Session Monitoring**: The plugin listens for the `session.idle` event which fires when the AI finishes its response
 
-4. **Task Completion**: When idle, the plugin marks the current task as `[x]` in PLAN.md and (in loop mode) creates a git commit
+4. **Task Completion**: When idle, the plugin marks the current task as `[x]` in PLAN.md and creates a git commit
 
 5. **Loop Continuation**: The plugin finds the next pending task and sends a new prompt. If no pending tasks remain, the loop ends.
 
-6. **Safety Stop**: If `maxIterations` is reached before all tasks complete, the loop halts entirely for human review
-
-### Direct Loop Mode (nm-loop)
-
-1. **Loop Activation**: When you call `nm-loop`, the plugin stores your prompt and creates a state file
-
-2. **Same Prompt Each Time**: Unlike plan-based mode, the exact same prompt is fed back each iteration
-
-3. **Completion Detection**: The plugin checks the AI's output for `<promise>YOUR_TEXT</promise>` tags matching your completion promise
-
-4. **Iterative Improvement**: The AI sees files modified by previous attempts, allowing it to build on its own work
-
-5. **Stops When**: The completion promise is detected OR maxIterations is reached
-
 ## When to Use Nelson
 
-### Plan-based mode (`nm-start`) is good for:
+### Good for:
 
 - Multi-step projects with distinct phases
 - Greenfield development where you want git commits per task
 - Projects where you want to review progress task-by-task
-
-### Direct loop mode (`nm-loop`) is good for:
-
-- "Make the tests pass" - iterate until green
-- "Fix the build errors" - hammer until it compiles
-- Bug hunting - keep trying fixes until resolved
-- Any goal with clear, verifiable success criteria
 
 ### Not good for:
 
@@ -331,7 +277,6 @@ Your plan files in `.opencode/plans/` can be committed if you want to share them
 
 ## Learn More
 
-- Original Ralph Wiggum technique: https://ghuntley.com/ralph/
 - OpenCode Plugins: https://opencode.ai/docs/plugins/
 
 ## License

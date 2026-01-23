@@ -1,49 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { extractPromiseText, slugify } from "./utils"
-
-describe("extractPromiseText", () => {
-  test("extracts text from promise tags", () => {
-    const input = "Some text <promise>DONE</promise> more text"
-    expect(extractPromiseText(input)).toBe("DONE")
-  })
-
-  test("trims whitespace from extracted text", () => {
-    const input = "<promise>  COMPLETED  </promise>"
-    expect(extractPromiseText(input)).toBe("COMPLETED")
-  })
-
-  test("collapses internal whitespace", () => {
-    const input = "<promise>ALL   TASKS\n\nDONE</promise>"
-    expect(extractPromiseText(input)).toBe("ALL TASKS DONE")
-  })
-
-  test("returns null when no promise tags present", () => {
-    const input = "No promise tags here"
-    expect(extractPromiseText(input)).toBeNull()
-  })
-
-  test("returns null for empty string", () => {
-    expect(extractPromiseText("")).toBeNull()
-  })
-
-  test("extracts only first promise tag when multiple present", () => {
-    const input = "<promise>FIRST</promise> text <promise>SECOND</promise>"
-    expect(extractPromiseText(input)).toBe("FIRST")
-  })
-
-  test("handles multiline content in promise tags", () => {
-    const input = `<promise>
-      Line 1
-      Line 2
-    </promise>`
-    expect(extractPromiseText(input)).toBe("Line 1 Line 2")
-  })
-
-  test("handles empty promise tags", () => {
-    const input = "<promise></promise>"
-    expect(extractPromiseText(input)).toBe("")
-  })
-})
+import { slugify } from "./utils"
 
 describe("slugify", () => {
   test("converts to lowercase", () => {

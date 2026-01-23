@@ -218,6 +218,8 @@ the bigger picture and make better decisions.
 
 ## Tasks
 
+<!-- Order tasks by execution sequence: foundational work first, then features that depend on it -->
+
 - [ ] **Task 1: Setup and Configuration**
   Initialize the project structure and configure dependencies.
   Include any specific requirements or constraints.
