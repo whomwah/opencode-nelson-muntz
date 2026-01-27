@@ -30,6 +30,8 @@ nm-start
 
 ## Installation
 
+> **Note**: This plugin has been primarily tested with Anthropic models (Claude) and works best with them.
+
 ### From npm (recommended for end users)
 
 Add the plugin to your `opencode.json`:
